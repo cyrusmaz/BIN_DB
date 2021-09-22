@@ -8,25 +8,49 @@ from db_helpers import long_to_datetime_str
 class candle_db():
     
     def __init__(self, DB_DIRECTORY, DB_NAME, SYMBOL, INTERVAL, TYPE, EXCHANGE, **kwargs):
+        try: 
+            self.symbol = SYMBOL
+            self.interval = INTERVAL
+            self.type = TYPE
+            self.exchange = EXCHANGE
 
-        self.symbol = SYMBOL
-        self.interval = INTERVAL
-        self.type = TYPE
-        self.exchange = EXCHANGE
-        
-        if not os.path.exists(DB_DIRECTORY):
-            print(f"CREATING DIRECTORY: {DB_DIRECTORY}")
-            os.makedirs(DB_DIRECTORY)
+            # print(DB_DIRECTORY+DB_NAME)
+            # print(self.symbol)
+            # print(self.interval)
+            # print(self.type)
+            # print(self.exchange)             
+            
+            if not os.path.exists(DB_DIRECTORY):
+                print(f"CREATING DIRECTORY: {DB_DIRECTORY}")
+                os.makedirs(DB_DIRECTORY)
 
-        self.con = sqlite3.connect(DB_DIRECTORY+DB_NAME)
-        self.cur = self.con.cursor()
+            self.con = sqlite3.connect(DB_DIRECTORY+DB_NAME, timeout=60)
+            self.cur = self.con.cursor()
+            
+            # print('before info table')
+            self.create_info_table()
+            # print('before candle table')            
+            self.create_candle_table()
+            # print('before view')                        
+            self.create_view()
+            # print('after view') 
+            # print('*************************************************************************** ')
 
-        self.create_candle_table()
-        self.create_info_table()
-        self.create_view()
+        except Exception as e: 
+            # input('hee')
+            print(e)
+            print(type(e))
+            print(DB_DIRECTORY+DB_NAME)
+            print(self.symbol)
+            print(self.interval)
+            print(self.type)
+            print(self.exchange) 
+            print('...............')
+            raise e           
+
 
     def get_last(self):
-        print(f'CandleDBClass.get_last() {self.symbol}, {self.interval}')
+        print(f'CandleDBClass.get_last() {self.symbol}, {self.type}, {self.interval}, {self.exchange}')
         row = self.query(f"SELECT candle FROM CANDLE_TABLE WHERE open_time=(SELECT last_open FROM LAST_INSERT_VIEW)") 
         if len(row)>1:
             print(f'CandleDBClass.get_last - {self.symbol}: {len(row)} MATCHING ENTRIES - SOMETHING IS WRONG? SHOULD BE JUST ONE')
@@ -133,6 +157,8 @@ class candle_db():
         self.cur.execute(query)
         self.con.commit()
 
+    def close_connection(self,):
+        self.con.close()
 
 
 

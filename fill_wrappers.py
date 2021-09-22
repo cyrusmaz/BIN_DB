@@ -18,10 +18,31 @@ import datetime
 
 
 
-def candle_fill_wrapper(symbols, dbs, interval, futs, forward, batch_size, logger=None, backfill=None):
+def candle_fill_wrapper(
+    symbols, 
+    interval, 
+    futs, 
+    forward, 
+    batch_size, 
+    db_args_dict,
+    dir_,
+    logger=None, 
+    backfill=None):
     j=0
     for batch_symbols in batch_symbols_fn(symbols=symbols, batch_size=batch_size):
         j+=1
+
+
+        dbs={}
+        # batch_symbols=list(filter(lambda x: x!='BNBBTC', batch_symbols))
+        for s in batch_symbols:
+            db_name=f'{s}_{interval}_candle.db'
+            db_dir = f'{dir_}{interval}/'     
+            dbs[s]=candle_db(DB_DIRECTORY=db_dir, DB_NAME=db_name, INTERVAL=interval, SYMBOL=s, **db_args_dict)   
+
+
+
+
         try: 
             if forward is True: 
                 candles_forwardfill_fn(symbols=batch_symbols,dbs=dbs, interval=interval, backfill=backfill, futs=futs, logger=logger)            
@@ -48,10 +69,10 @@ def candle_fill_wrapper(symbols, dbs, interval, futs, forward, batch_size, logge
                 candles_forwardfill_fn(symbols=batch_symbols,dbs=dbs, interval=interval, backfill=backfill, futs=futs, logger=logger)            
             elif forward is False:
                 candles_backfill_fn(symbols=batch_symbols,dbs=dbs, interval=interval, backfill=backfill, futs=futs, logger=logger)                    
-        print(f'time.sleep(60) - candle_fill_wrapper() end of batch {j}, batch_size={batch_size}, symbols:{len(symbols)}, interval:{interval}, forward:{forward}')
+        print(f'time.sleep(60) - candle_fill_wrapper() end of batch {j}, batch_size={batch_size}, symbols:{len(symbols)},futs:{futs}, interval:{interval}, forward:{forward}')
         time.sleep(60)
 
-    print(f'candle_fill_wrapper() complete')
+    print(f'candle_fill_wrapper() complete. futs:{futs}, interval:{interval}, forward:{forward}')
 
 
 def funding_fill_wrapper(symbols, dbs, batch_size, logger=None):
@@ -152,28 +173,107 @@ def prepare_for_oi_fetch(dir_, symbols, oi_interval, db_args_dict, check_existen
 
     return symbols_exist, dbs_exist, symbols_dne, dbs_dne
 
-
-def prepare_for_candle_fetch(dir_, symbols,candle_interval, db_args_dict, check_existence=True):
+def prepare_for_candle_fetch(dir_, symbols, candle_interval, db_args_dict, check_existence=True, logger=None):
     """if check_existence is True then check if db exists and has at least one record"""
     symbols_exist = []
     symbols_dne = []
-    dbs_exist = {}
-    dbs_dne = {}
+    # dbs_exist = {}
+    # dbs_dne = {}
+    j=0
     # ESTABLISH WHICH SYMBOL HAS AN EXISTING DB WITH AT LEAST ONE RECORD, AND WHICH DOESN'T
     for s in symbols:
+        j+=1
+        print(j)
         db_name=f'{s}_{candle_interval}_candle.db'
         db_dir = f'{dir_}{candle_interval}/'     
-        db=candle_db(DB_DIRECTORY=db_dir, DB_NAME=db_name, INTERVAL=candle_interval, SYMBOL=s, **db_args_dict)       
+
+        db=candle_db(DB_DIRECTORY=db_dir, DB_NAME=db_name, INTERVAL=candle_interval, SYMBOL=s, **db_args_dict)    
 
         if check_existence is True: 
             if db.get_last() is not None: 
                 symbols_exist.append(s)
-                dbs_exist[s]=db
+                # dbs_exist[s]=db
             else:
                 symbols_dne.append(s)
-                dbs_dne[s]=db
+                # dbs_dne[s]=db
         else: 
             symbols_exist.append(s)
-            dbs_exist[s]=db            
+            # dbs_exist[s]=db           
 
-    return symbols_exist, dbs_exist, symbols_dne, dbs_dne
+        # del db 
+        db.close_connection()
+        del db
+
+    return symbols_exist, symbols_dne 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# def prepare_for_candle_fetch(dir_, symbols, candle_interval, db_args_dict, exists=True, logger=None):
+#     """return only those that exists if exsits is True, else dne"""
+#     """'exists' defined as database exists and contains atleast one non empty record"""
+
+#     symbols_exist = []
+#     symbols_dne = []
+#     dbs_exist = {}
+#     dbs_dne = {}
+#     j=0
+#     # ESTABLISH WHICH SYMBOL HAS AN EXISTING DB WITH AT LEAST ONE RECORD, AND WHICH DOESN'T
+#     for s in symbols:
+#         j+=1
+#         print(j)
+#         db_name=f'{s}_{candle_interval}_candle.db'
+#         db_dir = f'{dir_}{candle_interval}/'     
+
+
+#         db=candle_db(DB_DIRECTORY=db_dir, DB_NAME=db_name, INTERVAL=candle_interval, SYMBOL=s, **db_args_dict)    
+
+#         if exists: 
+#             if db.get_last() is not None: 
+#                 symbols_exist.append(s)
+#                 dbs_exist[s]=db
+#             else:
+#                 del db
+#         else: 
+#             if db.get_last() is None: 
+#                 symbols_exist.append(s)
+#                 dbs_exist[s]=db
+#             else:
+#                 del db
+
+#     return symbols_exist, dbs_exist, symbols_dne, dbs_dne
+
+
+
+
+
+
+
+
+
+
+
+

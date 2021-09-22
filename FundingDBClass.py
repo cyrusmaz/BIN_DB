@@ -28,8 +28,9 @@ class funding_db():
         self.con = sqlite3.connect(DB_DIRECTORY+DB_NAME)
         self.cur = self.con.cursor()
 
-        self.create_candle_table()
+
         self.create_info_table()
+        self.create_candle_table()
         self.create_view()
 
 

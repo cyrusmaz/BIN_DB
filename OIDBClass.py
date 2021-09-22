@@ -24,8 +24,9 @@ class oi_db():
         self.con = sqlite3.connect(DB_DIRECTORY+DB_NAME)
         self.cur = self.con.cursor()
 
-        self.create_candle_table()
+
         self.create_info_table()
+        self.create_candle_table()
         self.create_view()
 
 
@@ -101,7 +102,7 @@ class oi_db():
         for i in range(len(insert_list)):
             oi_time = insert_list[i][0]['timestamp']
             oi_sum = insert_list[i][0]['sumOpenInterest']
-            oi_sum_value = insert_list[i][0]['sumOpenInterest']
+            oi_sum_value = insert_list[i][0]['sumOpenInterestValue']
 
             insert_list[i].append(oi_time)
             insert_list[i].append(long_to_datetime_str(oi_time))

@@ -1,0 +1,5 @@
+# prepare_to_fetch_candles only returns symbols, not dbs
+# this is because having >1000 dbs connections resulted in an error
+# eventually the funding and oi fetch prep functions may need to be redesigned to have same mechanism
+# for now it's not a problem because the dbs required for funding/oi (and even usd_futs_candles) are well below 1000
+# while there are about 1220 spot symbols currently (as of sept 19, 2021)
