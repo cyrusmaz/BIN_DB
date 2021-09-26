@@ -81,7 +81,7 @@ async def get_candles(symbols, interval='1m',limit=1000, startTimes=None, endTim
 
 # FUNDING AND OI
 async def get_futs_stat_worker(symbol, stat=None, period=None, limit=500, startTime=None, endTime=None, logger=None, **kwargs):
-    print(f'async get_candles_worker({symbol}, stat={stat},period={period}, limit={limit}, startTime={long_to_datetime_str(startTime)}, endTime={long_to_datetime_str(endTime)})')
+    print(f'async get_futs_stat_worker({symbol}, stat={stat},period={period}, limit={limit}, startTime={long_to_datetime_str(startTime)}, endTime={long_to_datetime_str(endTime)})')
     if stat == 'funding':
         endpoint = "https://fapi.binance.com/fapi/v1/fundingRate?symbol={}&limit={}"
         url = endpoint.format(symbol, limit)

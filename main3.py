@@ -157,6 +157,9 @@ if __name__ == "__main__":
             batch_size=FUTS_FUNDING_RATE_LIMIT/4, 
             logger=None)        
 
+
+
+
     if args.spot_candles: 
         if custom_symbols is not None: spot_symbols_of_interest=custom_symbols
 
@@ -210,44 +213,123 @@ if __name__ == "__main__":
                 logger=logger,
                 backfill=None)
 
+
+
+
+
+
+
+
+
+################################
+
     if args.usd_futs_candles: 
         if custom_symbols is not None: usd_futs_symbols_of_interest=custom_symbols
 
-        symbols_exist,dbs_exist,symbols_dne,dbs_dne = prepare_for_candle_fetch(
+        db_args_dict=dict(TYPE='usd_futs', EXCHANGE=exchange)
+
+        symbols_exist,symbols_dne = prepare_for_candle_fetch(
             dir_=usd_futs_candles_dir, 
             symbols=usd_futs_symbols_of_interest, 
             candle_interval=candle_interval, 
             check_existence=args.check_existence,
             logger=logger,
-            db_args_dict=dict(TYPE='usd_futs', EXCHANGE=exchange))
-    
+            db_args_dict=db_args_dict)     
+
         if args.forward: 
             candle_fill_wrapper(
                 symbols=symbols_exist, 
-                dbs=dbs_exist, 
+                # dbs=dbs_exist, 
                 interval=candle_interval, 
                 futs=True, 
                 forward=True, 
                 batch_size=FUTS_CANDLE_RATE_LIMIT/4, 
-                logger=logger)
+                db_args_dict=db_args_dict,
+                dir_=usd_futs_candles_dir, 
+                logger=logger,
+                backfill=None)      
 
         if args.backward=='exists' or args.backward=='exist' or args.backward=='all': 
             candle_fill_wrapper(
                 symbols=symbols_exist, 
-                dbs=dbs_exist, 
+                # dbs=dbs_exist, 
                 interval=candle_interval, 
                 futs=True, 
                 forward=False, 
                 batch_size=FUTS_CANDLE_RATE_LIMIT/4, 
-                logger=logger)
+                db_args_dict=db_args_dict,          
+                dir_=usd_futs_candles_dir,       
+                logger=logger,
+                backfill=None)
 
         if args.backward=='dne' or args.backward=='all': 
             candle_fill_wrapper(
                 symbols=symbols_dne, 
-                dbs=dbs_dne, 
+                # dbs=dbs_dne, 
                 interval=candle_interval, 
                 futs=True, 
                 # backfill=3,
                 forward=False, 
                 batch_size=FUTS_CANDLE_RATE_LIMIT/4, 
-                logger=logger)
+                db_args_dict=db_args_dict,     
+                dir_=usd_futs_candles_dir,            
+                logger=logger,
+                backfill=None)
+
+######################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    # if args.usd_futs_candles: 
+    #     if custom_symbols is not None: usd_futs_symbols_of_interest=custom_symbols
+
+    #     symbols_exist,dbs_exist,symbols_dne,dbs_dne = prepare_for_candle_fetch(
+    #         dir_=usd_futs_candles_dir, 
+    #         symbols=usd_futs_symbols_of_interest, 
+    #         candle_interval=candle_interval, 
+    #         check_existence=args.check_existence,
+    #         logger=logger,
+    #         db_args_dict=dict(TYPE='usd_futs', EXCHANGE=exchange))
+    
+    #     if args.forward: 
+    #         candle_fill_wrapper(
+    #             symbols=symbols_exist, 
+    #             dbs=dbs_exist, 
+    #             interval=candle_interval, 
+    #             futs=True, 
+    #             forward=True, 
+    #             batch_size=FUTS_CANDLE_RATE_LIMIT/4, 
+    #             logger=logger)
+
+    #     if args.backward=='exists' or args.backward=='exist' or args.backward=='all': 
+    #         candle_fill_wrapper(
+    #             symbols=symbols_exist, 
+    #             dbs=dbs_exist, 
+    #             interval=candle_interval, 
+    #             futs=True, 
+    #             forward=False, 
+    #             batch_size=FUTS_CANDLE_RATE_LIMIT/4, 
+    #             logger=logger)
+
+    #     if args.backward=='dne' or args.backward=='all': 
+    #         candle_fill_wrapper(
+    #             symbols=symbols_dne, 
+    #             dbs=dbs_dne, 
+    #             interval=candle_interval, 
+    #             futs=True, 
+    #             # backfill=3,
+    #             forward=False, 
+    #             batch_size=FUTS_CANDLE_RATE_LIMIT/4, 
+    #             logger=logger)
