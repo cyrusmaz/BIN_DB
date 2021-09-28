@@ -11,7 +11,7 @@ from async_fns import get_candles
 
 
 
-def candles_forwardfill_fn(symbols, dbs=None, interval='1m', backfill=8, futs=False, logger=None):
+def candles_forwardfill_fn(symbols, dbs=None, interval='1m', startTimes_dict=None, futs=False, logger=None):
     """ for backfilling candles start at present and go backward 
         until either backfill is reached or no new data comes in on each subsequent request"""
 
@@ -27,7 +27,7 @@ def candles_forwardfill_fn(symbols, dbs=None, interval='1m', backfill=8, futs=Fa
     if symbols is None or len(symbols)==0:
         return None
 
-    interval_len = interval_length_ms(interval)
+    # interval_len = interval_length_ms(interval)
     j=0
     
     start_time = datetime.datetime.now()
@@ -37,19 +37,25 @@ def candles_forwardfill_fn(symbols, dbs=None, interval='1m', backfill=8, futs=Fa
     startTimes_prev =[]
     last_insert_print = {k:None for k in symbols}
 
-    for symbol in symbols:
-        if dbs is not None: 
-            last_candle = dbs[symbol].get_last()
+    if startTimes_dict is None: 
+        for symbol in symbols:
+            if dbs is not None: 
+                last_candle = dbs[symbol].get_last()
 
-            dbs[symbol].delete_last()
-            startTime = last_candle[0]
-            startTimes_prev.append(startTime)
+                # dbs[symbol].delete_last()
+                startTime = last_candle[0]
+                startTimes_prev.append(startTime)
+    else: 
+        for symbol in symbols:
+            startTime = startTimes_dict[symbol]
+            startTimes_prev.append(startTime)     
    
     data = asyncio.run(get_candles(**dict(symbols=symbols, interval=interval, limit=limit, startTimes=startTimes_prev, futs=futs, logger=logger)))
 
     for symbol in symbols:
         if len(data[symbol])>0: last_insert_print[symbol]=data[symbol][-1][0]
         if dbs is not None:   
+            dbs[symbol].delete_last()
             dbs[symbol].insert_multiple(data[symbol])
 
     pops = list(filter(lambda x: len(data[symbols[x]])<limit, range(len(symbols))))

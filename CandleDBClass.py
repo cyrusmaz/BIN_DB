@@ -7,7 +7,7 @@ from db_helpers import long_to_datetime_str
 
 class candle_db():
     
-    def __init__(self, DB_DIRECTORY, DB_NAME, SYMBOL, INTERVAL, TYPE, EXCHANGE, **kwargs):
+    def __init__(self, DB_DIRECTORY, DB_NAME, SYMBOL, INTERVAL, TYPE, EXCHANGE, READ_ONLY=False, **kwargs):
         try: 
             self.symbol = SYMBOL
             self.interval = INTERVAL
@@ -24,7 +24,10 @@ class candle_db():
                 print(f"CREATING DIRECTORY: {DB_DIRECTORY}")
                 os.makedirs(DB_DIRECTORY)
 
-            self.con = sqlite3.connect(DB_DIRECTORY+DB_NAME, timeout=60)
+            if READ_ONLY: 
+                self.con = sqlite3.connect('file:'+DB_DIRECTORY+DB_NAME+'?mode=ro', uri=True)
+            else: 
+                self.con = sqlite3.connect(DB_DIRECTORY+DB_NAME)
             self.cur = self.con.cursor()
             
             # print('before info table')

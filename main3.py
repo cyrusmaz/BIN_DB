@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
 
     param_path = '/mnt/nvme1n1/DB/BINANCE/params.json' if args.nvme1n1 else '/home/cm/Documents/PY_DEV/DB/BINANCE/params.json'
-
+    # param_path = '/home/cm/Documents/PY_DEV/DB/BINANCE/params.json'
     # get parameters
     with open(param_path,'r') as f: 
         db_parameters= json.load(f)
@@ -165,13 +165,17 @@ if __name__ == "__main__":
 
         db_args_dict=dict(TYPE='spot', EXCHANGE=exchange)
 
-        symbols_exist,symbols_dne = prepare_for_candle_fetch(
+        symbols_exist, startTimes_dict, symbols_dne = prepare_for_candle_fetch(
             dir_=spot_candles_dir, 
             symbols=spot_symbols_of_interest, 
             candle_interval=candle_interval, 
             check_existence=args.check_existence,
             logger=logger,
             db_args_dict=db_args_dict)     
+
+        # print(symbols_exist)
+        # print(startTimes_dict)
+        # print(symbols_dne)
 
         if args.forward: 
             candle_fill_wrapper(
@@ -183,6 +187,7 @@ if __name__ == "__main__":
                 batch_size=SPOT_CANDLE_RATE_LIMIT/4, 
                 db_args_dict=db_args_dict,
                 dir_=spot_candles_dir, 
+                startTimes_dict=startTimes_dict,
                 logger=logger,
                 backfill=None)      
 
@@ -195,7 +200,8 @@ if __name__ == "__main__":
                 forward=False, 
                 batch_size=SPOT_CANDLE_RATE_LIMIT/4, 
                 db_args_dict=db_args_dict,          
-                dir_=spot_candles_dir,       
+                dir_=spot_candles_dir,     
+                startTimes_dict=startTimes_dict,  
                 logger=logger,
                 backfill=None)
 
@@ -209,7 +215,8 @@ if __name__ == "__main__":
                 forward=False, 
                 batch_size=SPOT_CANDLE_RATE_LIMIT/4, 
                 db_args_dict=db_args_dict,     
-                dir_=spot_candles_dir,            
+                dir_=spot_candles_dir,   
+                startTimes_dict=startTimes_dict,         
                 logger=logger,
                 backfill=None)
 
@@ -228,7 +235,7 @@ if __name__ == "__main__":
 
         db_args_dict=dict(TYPE='usd_futs', EXCHANGE=exchange)
 
-        symbols_exist,symbols_dne = prepare_for_candle_fetch(
+        symbols_exist, startTimes_dict, symbols_dne  = prepare_for_candle_fetch(
             dir_=usd_futs_candles_dir, 
             symbols=usd_futs_symbols_of_interest, 
             candle_interval=candle_interval, 
@@ -246,6 +253,7 @@ if __name__ == "__main__":
                 batch_size=FUTS_CANDLE_RATE_LIMIT/4, 
                 db_args_dict=db_args_dict,
                 dir_=usd_futs_candles_dir, 
+                startTimes_dict=startTimes_dict,
                 logger=logger,
                 backfill=None)      
 
@@ -258,7 +266,8 @@ if __name__ == "__main__":
                 forward=False, 
                 batch_size=FUTS_CANDLE_RATE_LIMIT/4, 
                 db_args_dict=db_args_dict,          
-                dir_=usd_futs_candles_dir,       
+                dir_=usd_futs_candles_dir,  
+                startTimes_dict=startTimes_dict,     
                 logger=logger,
                 backfill=None)
 
@@ -272,7 +281,8 @@ if __name__ == "__main__":
                 forward=False, 
                 batch_size=FUTS_CANDLE_RATE_LIMIT/4, 
                 db_args_dict=db_args_dict,     
-                dir_=usd_futs_candles_dir,            
+                dir_=usd_futs_candles_dir,   
+                startTimes_dict=startTimes_dict,         
                 logger=logger,
                 backfill=None)
 

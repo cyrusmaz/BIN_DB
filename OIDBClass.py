@@ -10,7 +10,7 @@ from db_helpers import *
 
 class oi_db():
     
-    def __init__(self, DB_DIRECTORY, DB_NAME, SYMBOL,INTERVAL, TYPE, EXCHANGE, **kwargs):
+    def __init__(self, DB_DIRECTORY, DB_NAME, SYMBOL,INTERVAL, TYPE, EXCHANGE, READ_ONLY=False, **kwargs):
 
         self.symbol = SYMBOL
         self.type = TYPE
@@ -21,7 +21,10 @@ class oi_db():
             print(f"CREATING DIRECTORY: {DB_DIRECTORY}")
             os.makedirs(DB_DIRECTORY)
 
-        self.con = sqlite3.connect(DB_DIRECTORY+DB_NAME)
+        if READ_ONLY: 
+            self.con = sqlite3.connect('file:'+DB_DIRECTORY+DB_NAME+'?mode=ro', uri=True) 
+        else: 
+            self.con = sqlite3.connect(DB_DIRECTORY+DB_NAME)
         self.cur = self.con.cursor()
 
 

@@ -26,6 +26,7 @@ def candle_fill_wrapper(
     batch_size, 
     db_args_dict,
     dir_,
+    startTimes_dict=None,
     logger=None, 
     backfill=None):
     j=0
@@ -45,7 +46,7 @@ def candle_fill_wrapper(
 
         try: 
             if forward is True: 
-                candles_forwardfill_fn(symbols=batch_symbols,dbs=dbs, interval=interval, backfill=backfill, futs=futs, logger=logger)            
+                candles_forwardfill_fn(symbols=batch_symbols,dbs=dbs, interval=interval, startTimes_dict=startTimes_dict, futs=futs, logger=logger)            
             elif forward is False:
                 candles_backfill_fn(symbols=batch_symbols,dbs=dbs, interval=interval, backfill=backfill, futs=futs, logger=logger)
         except aiohttp.client_exceptions.ServerDisconnectedError: 
@@ -181,6 +182,7 @@ def prepare_for_candle_fetch(dir_, symbols, candle_interval, db_args_dict, check
     # dbs_dne = {}
     j=0
     # ESTABLISH WHICH SYMBOL HAS AN EXISTING DB WITH AT LEAST ONE RECORD, AND WHICH DOESN'T
+    startTimes_dict = dict()
     for s in symbols:
         j+=1
         print(j)
@@ -190,8 +192,10 @@ def prepare_for_candle_fetch(dir_, symbols, candle_interval, db_args_dict, check
         db=candle_db(DB_DIRECTORY=db_dir, DB_NAME=db_name, INTERVAL=candle_interval, SYMBOL=s, **db_args_dict)    
 
         if check_existence is True: 
-            if db.get_last() is not None: 
+            last_candle=db.get_last()
+            if last_candle is not None: 
                 symbols_exist.append(s)
+                startTimes_dict[s]=last_candle[0]
                 # dbs_exist[s]=db
             else:
                 symbols_dne.append(s)
@@ -204,7 +208,10 @@ def prepare_for_candle_fetch(dir_, symbols, candle_interval, db_args_dict, check
         db.close_connection()
         del db
 
-    return symbols_exist, symbols_dne 
+    if len(startTimes_dict)==0:
+        startTimes_dict=None
+
+    return symbols_exist,startTimes_dict, symbols_dne 
 
 
 

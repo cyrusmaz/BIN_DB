@@ -11,7 +11,7 @@ from db_helpers import *
 
 class symbols_db():
     
-    def __init__(self, DB_DIRECTORY, DB_NAME, EXCHANGE, LOGGER):
+    def __init__(self, DB_DIRECTORY, DB_NAME, EXCHANGE, LOGGER, READ_ONLY=False,):
 
         # self.symbol = SYMBOL
         # self.type = TYPE
@@ -22,7 +22,12 @@ class symbols_db():
             print(f"CREATING DIRECTORY: {DB_DIRECTORY}")
             os.makedirs(DB_DIRECTORY)
 
-        self.con = sqlite3.connect(DB_DIRECTORY+DB_NAME)
+
+        if READ_ONLY: 
+            self.con = sqlite3.connect('file:'+DB_DIRECTORY+DB_NAME+'?mode=ro', uri=True)   
+        else: 
+            self.con = sqlite3.connect(DB_DIRECTORY+DB_NAME)
+
         self.cur = self.con.cursor()
 
         self.create_candle_table()
@@ -30,7 +35,8 @@ class symbols_db():
         self.create_view()
 
     def log_info(self, payload):
-        self.logger.info(dict(origin='symbols_db', payload=payload))
+        if self.logger is not None: 
+            self.logger.info(dict(origin='symbols_db', payload=payload))
 
     def get_last(self):
         row = self.query(f"SELECT * FROM SYMBOLS_TABLE WHERE insert_timestamp=(SELECT last_insert_time FROM LAST_INSERT_VIEW)") 
