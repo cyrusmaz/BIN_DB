@@ -1,4 +1,4 @@
-from binance.client import Client
+# from binance.client import Client
 import datetime
 from math import ceil
 import logging
@@ -6,7 +6,23 @@ import logging
 import numpy as np
 import pandas as pd
 import os
+import json
 
+
+def get_directories_from_param_path(param_path):
+    with open(param_path,'r') as f: 
+        db_parameters= json.load(f)
+
+    symbols_dir = db_parameters['DB_DIRECTORY_SYMBOLS']
+    usd_futs_candles_dir = db_parameters['DB_DIRECTORY_CANDLES']+'USD_FUTS/'
+    spot_candles_dir = db_parameters['DB_DIRECTORY_CANDLES']+'SPOT/'
+    # extract oi and fundiing directories
+    usd_futs_oi_dir = db_parameters['DB_DIRECTORY_OI']
+    usd_futs_funding_dir =  db_parameters['DB_DIRECTORY_FUNDING']
+    # extract exchange and exchange_types 
+    exchange=db_parameters['EXCHANGE']
+    # exchange_types = db_parameters['EXCHANG_TYPES']
+    return symbols_dir, usd_futs_candles_dir, spot_candles_dir, usd_futs_oi_dir, usd_futs_funding_dir, exchange
 
 
 def batch_symbols_fn(symbols, batch_size):

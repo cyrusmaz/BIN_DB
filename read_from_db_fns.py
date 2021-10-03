@@ -2,27 +2,12 @@ from SymbolsDBClass import symbols_db
 from CandleDBClass import candle_db
 from OIDBClass import oi_db
 from FundingDBClass import funding_db
-
+from db_helpers import get_directories_from_param_path
 
 
 import json
 
 param_path='/home/cm/Documents/PY_DEV/DB/BINANCE/params.json'
-
-def get_directories_from_param_path(param_path):
-    with open(param_path,'r') as f: 
-        db_parameters= json.load(f)
-
-    symbols_dir = db_parameters['DB_DIRECTORY_SYMBOLS']
-    usd_futs_candles_dir = db_parameters['DB_DIRECTORY_CANDLES']+'USD_FUTS/'
-    spot_candles_dir = db_parameters['DB_DIRECTORY_CANDLES']+'SPOT/'
-    # extract oi and fundiing directories
-    usd_futs_oi_dir = db_parameters['DB_DIRECTORY_OI']
-    usd_futs_funding_dir =  db_parameters['DB_DIRECTORY_FUNDING']
-    # extract exchange and exchange_types 
-    exchange=db_parameters['EXCHANGE']
-    # exchange_types = db_parameters['EXCHANG_TYPES']
-    return symbols_dir, usd_futs_candles_dir, spot_candles_dir, usd_futs_oi_dir, usd_futs_funding_dir, exchange
 
 def read_symbols_from_db(param_path):
     symbols_dir, usd_futs_candles_dir, spot_candles_dir, usd_futs_oi_dir, usd_futs_funding_dir, exchange = get_directories_from_param_path(param_path)
@@ -52,7 +37,8 @@ def read_oi_from_db(param_path, symbol, oi_interval, n, first_n=False, last_n=Fa
     output = [json.loads(r[0]) for r in results]
     first_time = results[0][1]
     last_time = results[-1][1]  
-    print(f'first timestamp: {first_time}, last timestamp: {last_time}')
+    print(f'symbol:{symbol} oi - first timestamp: {first_time}, last timestamp: {last_time}')
+    del oi_db_
     return output
 
 
@@ -78,7 +64,8 @@ def read_funding_from_db(param_path, symbol, n, first_n=False, last_n=False):
     output = [json.loads(r[0]) for r in results]
     first_time = results[0][1]
     last_time = results[-1][1]  
-    print(f'first timestamp: {first_time}, last timestamp: {last_time}')
+    print(f'symbol:{symbol} funding - first timestamp: {first_time}, last timestamp: {last_time}')
+    del funding_db_
     return output
 
 
@@ -112,5 +99,6 @@ def read_candle_from_db(param_path, symbol,candle_interval,type_, n, first_n=Fal
     output = [json.loads(r[0]) for r in results]
     first_time = results[0][1]
     last_time = results[-1][1]  
-    print(f'first timestamp: {first_time}, last timestamp: {last_time}')
+    print(f'symbol:{symbol} {type_} candles - first timestamp: {first_time}, last timestamp: {last_time}')
+    del candle_db_
     return output

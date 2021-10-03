@@ -104,6 +104,7 @@ async def get_futs_stat_worker(symbol, stat=None, period=None, limit=500, startT
         url = url + '&endTime={}'.format(endTime)        
     output = {}
     try: 
+        # print(url)
         async with aiohttp.ClientSession(json_serialize=json.dumps) as session:
             async with session.get(url) as resp:
                 resp = await resp.json(loads=json.loads)
