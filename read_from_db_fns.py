@@ -9,11 +9,11 @@ import json
 
 param_path='/home/cm/Documents/PY_DEV/DB/BINANCE/params.json'
 
-def read_symbols_from_db(param_path):
+def read_symbols_from_db(param_path, raw_dump=False):
     symbols_dir, usd_futs_candles_dir, spot_candles_dir, usd_futs_oi_dir, usd_futs_funding_dir, exchange = get_directories_from_param_path(param_path)
 
     db_symbols=symbols_db(DB_DIRECTORY=symbols_dir,DB_NAME='symbols.db', EXCHANGE=exchange, LOGGER=None, READ_ONLY=True)
-    return db_symbols.get_last()
+    return db_symbols.get_last(raw_dump=raw_dump)
 
 def read_oi_from_db(param_path, symbol, oi_interval, n, first_n=False, last_n=False):
     symbols_dir, usd_futs_candles_dir, spot_candles_dir, usd_futs_oi_dir, usd_futs_funding_dir, exchange = get_directories_from_param_path(param_path)

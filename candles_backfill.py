@@ -7,7 +7,7 @@ import time
 from copy import deepcopy
 from math import ceil
 
-def candles_backfill_fn(symbols, dbs=None, interval='1m', backfill=8, futs=False, logger=None, memory_efficient=True):
+def candles_backfill_fn(symbols, dbs=None, interval='1m', backfill=8, futs=False, mark=False, index=False, logger=None, memory_efficient=True):
     """ for backfilling candles start at present and go backward 
         until either backfill is reached or no new data comes in on each subsequent request"""
 
@@ -50,7 +50,7 @@ def candles_backfill_fn(symbols, dbs=None, interval='1m', backfill=8, futs=False
     if len(endTimes_prev)==0:
         endTimes_prev=None
 
-    data = asyncio.run(get_candles(**dict(symbols=symbols, interval=interval, limit=limit, endTimes=endTimes_prev, futs=futs, logger=logger)))
+    data = asyncio.run(get_candles(**dict(symbols=symbols, interval=interval, limit=limit, endTimes=endTimes_prev, futs=futs, mark=mark, index=index, logger=logger)))
     current_minute_weight += len(symbols)
     
 
@@ -86,12 +86,8 @@ def candles_backfill_fn(symbols, dbs=None, interval='1m', backfill=8, futs=False
             del symbols[symbols.index(s)]
             # symbols.remove(s)
 
-
-
-
     total_requests_per_symbol += 1
 
-    
     j+=1
     # print(symbols)
     print('j={}'.format(j))
@@ -152,7 +148,7 @@ def candles_backfill_fn(symbols, dbs=None, interval='1m', backfill=8, futs=False
         if len(symbols)==0:
             break
 
-        new_data = asyncio.run(get_candles(**dict(symbols=symbols, interval=interval, limit=limit, endTimes=endTimes, futs=futs, logger=logger)))
+        new_data = asyncio.run(get_candles(**dict(symbols=symbols, interval=interval, limit=limit, endTimes=endTimes, futs=futs, mark=mark, index=index, logger=logger)))
         current_minute_weight += len(symbols)
 
         total_requests_per_symbol += 1
@@ -179,13 +175,6 @@ def candles_backfill_fn(symbols, dbs=None, interval='1m', backfill=8, futs=False
 
     data = {k:v[-backfill:] for k,v in data.items()} if backfill is not None else data
     for k,v in data.items():
-        # try: 
-        #     last_timestamp = long_to_datetime_str(endTimes_prev[symbols.index(k)])
-        # except ValueError: 
-        #     last_timestamp = None
-        # print(f'candles_backfill_fn {k} futs:{futs} : {len(v)} {interval} candles - last entry: {long_to_datetime_str(data[k][0][0])}')
-
-        # print(f'candles_backfill_fn {k} futs:{futs} : {len(v)} {interval} candles - last entry: ')
         print(f'candles_backfill_fn:{k} futs:{futs} interval:{interval} inserted:{len(v)} last:{long_to_datetime_str(last_insert_print[k])}')
         
     return data

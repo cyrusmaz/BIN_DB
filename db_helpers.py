@@ -24,13 +24,11 @@ def get_directories_from_param_path(param_path):
     # exchange_types = db_parameters['EXCHANG_TYPES']
     return symbols_dir, usd_futs_candles_dir, spot_candles_dir, usd_futs_oi_dir, usd_futs_funding_dir, exchange
 
-
 def batch_symbols_fn(symbols, batch_size):
     """produce an iterato symbols. batch_size has to be <= rate limit"""
     for j in range(ceil(len(symbols)/batch_size)):
         batch_symbols = symbols[int(j*batch_size):int((j+1)*batch_size)]
         yield batch_symbols
-
 
 def get_symbols(exchange_infos, logger):
     spot_trading = list(filter(lambda x: x['status']== 'TRADING', exchange_infos['spot']['symbols']))
@@ -87,15 +85,11 @@ def logger_setup(LOG_DIR):
     logger.addHandler(handler)
     return logger
 
-
-
-
 def long_to_datetime(long, utc=True):
     if utc:
         return datetime.datetime.fromtimestamp(long/1000, tz=datetime.timezone.utc)
     else:
         return datetime.datetime.fromtimestamp(long/1000)
-
 
 def interval_length_ms(interval):
     if interval=='1m': return 60000
@@ -112,8 +106,6 @@ def interval_length_ms(interval):
     elif interval=="1d": return 60000*24*60
     elif interval=="3d": return 60000*3*24*60
     elif interval=="1w": return 60000*7*24*60
-
-
 
 def time_inconsistencies(series, interval, return_str=True, utc=True):
     interval_len = interval_length_ms(interval)
@@ -171,8 +163,6 @@ requote_map = lambda old_quote, new_quote, symbols: list(map(lambda x: x.split(o
 #     futs_eth=list(filter(lambda x: x in all_spot_symbols, futs_eth))
 #     futs_bnb=list(filter(lambda x: x in all_spot_symbols, futs_bnb))
 #     return futs, futs_usdt, futs_btc, futs_eth, futs_bnb, all_spot_symbols
-
-
 
 def datetime_to_long(year, month, day, hour=0, minute=0, second=0):
     dt = datetime.datetime(year, month, day, hour=0, minute=0, second=0, microsecond=0)

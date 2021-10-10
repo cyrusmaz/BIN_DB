@@ -22,6 +22,8 @@ def candle_fill_wrapper(
     symbols, 
     interval, 
     futs, 
+    mark,
+    index,
     forward, 
     batch_size, 
     db_args_dict,
@@ -29,6 +31,7 @@ def candle_fill_wrapper(
     startTimes_dict=None,
     logger=None, 
     backfill=None):
+    
     j=0
     for batch_symbols in batch_symbols_fn(symbols=symbols, batch_size=batch_size):
         j+=1
@@ -37,7 +40,13 @@ def candle_fill_wrapper(
         dbs={}
         # batch_symbols=list(filter(lambda x: x!='BNBBTC', batch_symbols))
         for s in batch_symbols:
-            db_name=f'{s}_{interval}_candle.db'
+            if futs and not mark and not index:
+                db_name=f'{s}_{interval}_candle.db'
+            elif futs and mark and not index:
+                db_name=f'{s}_{interval}_mark.db'
+            elif futs and not mark and index:
+                db_name=f'{s}_{interval}_index.db'
+            
             db_dir = f'{dir_}{interval}/'     
             dbs[s]=candle_db(DB_DIRECTORY=db_dir, DB_NAME=db_name, INTERVAL=interval, SYMBOL=s, **db_args_dict)   
 
@@ -46,9 +55,9 @@ def candle_fill_wrapper(
 
         try: 
             if forward is True: 
-                candles_forwardfill_fn(symbols=batch_symbols,dbs=dbs, interval=interval, startTimes_dict=startTimes_dict, futs=futs, logger=logger)            
+                candles_forwardfill_fn(symbols=batch_symbols,dbs=dbs, interval=interval, startTimes_dict=startTimes_dict, futs=futs,mark=mark, index=index, logger=logger)            
             elif forward is False:
-                candles_backfill_fn(symbols=batch_symbols,dbs=dbs, interval=interval, backfill=backfill, futs=futs, logger=logger)
+                candles_backfill_fn(symbols=batch_symbols,dbs=dbs, interval=interval, backfill=backfill, futs=futs, mark=mark, index=index, logger=logger)
         except aiohttp.client_exceptions.ServerDisconnectedError: 
             exception_time = datetime.datetime.now()
             if logger is not None: 
@@ -67,9 +76,9 @@ def candle_fill_wrapper(
             print(f'candle_fill_wrapper {exception_time} - batch_size is {batch_size}, symbols remaining: {len(batch_symbols)}, forward: {forward}')
             time.sleep(120)
             if forward is True: 
-                candles_forwardfill_fn(symbols=batch_symbols,dbs=dbs, interval=interval, backfill=backfill, futs=futs, logger=logger)            
+                candles_forwardfill_fn(symbols=batch_symbols,dbs=dbs, interval=interval, backfill=backfill, futs=futs, mark=mark, index=index, logger=logger)            
             elif forward is False:
-                candles_backfill_fn(symbols=batch_symbols,dbs=dbs, interval=interval, backfill=backfill, futs=futs, logger=logger)                    
+                candles_backfill_fn(symbols=batch_symbols,dbs=dbs, interval=interval, backfill=backfill, futs=futs, mark=mark, index=index, logger=logger)                    
         print(f'time.sleep(60) - candle_fill_wrapper() end of batch {j}, batch_size={batch_size}, symbols:{len(symbols)},futs:{futs}, interval:{interval}, forward:{forward}')
         time.sleep(60)
 
@@ -174,19 +183,27 @@ def prepare_for_oi_fetch(dir_, symbols, oi_interval, db_args_dict, check_existen
 
     return symbols_exist, dbs_exist, symbols_dne, dbs_dne
 
-def prepare_for_candle_fetch(dir_, symbols, candle_interval, db_args_dict, check_existence=True, logger=None):
+def prepare_for_candle_fetch(dir_, symbols, candle_interval, db_args_dict, futs=False, mark=False, index=False, check_existence=True, logger=None):
     """if check_existence is True then check if db exists and has at least one record"""
     symbols_exist = []
     symbols_dne = []
-    # dbs_exist = {}
-    # dbs_dne = {}
     j=0
     # ESTABLISH WHICH SYMBOL HAS AN EXISTING DB WITH AT LEAST ONE RECORD, AND WHICH DOESN'T
     startTimes_dict = dict()
     for s in symbols:
         j+=1
         print(j)
-        db_name=f'{s}_{candle_interval}_candle.db'
+        # db_name=f'{s}_{candle_interval}_candle.db'
+
+        if futs and not mark and not index:
+            db_name=f'{s}_{candle_interval}_candle.db'
+        elif futs and mark and not index:
+            db_name=f'{s}_{candle_interval}_mark.db'
+        elif futs and not mark and index:
+            db_name=f'{s}_{candle_interval}_index.db'
+        
+
+
         db_dir = f'{dir_}{candle_interval}/'     
 
         db=candle_db(DB_DIRECTORY=db_dir, DB_NAME=db_name, INTERVAL=candle_interval, SYMBOL=s, **db_args_dict)    
@@ -211,7 +228,7 @@ def prepare_for_candle_fetch(dir_, symbols, candle_interval, db_args_dict, check
     if len(startTimes_dict)==0:
         startTimes_dict=None
 
-    return symbols_exist,startTimes_dict, symbols_dne 
+    return symbols_exist, startTimes_dict, symbols_dne 
 
 
 

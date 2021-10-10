@@ -11,7 +11,7 @@ from async_fns import get_candles
 
 
 
-def candles_forwardfill_fn(symbols, dbs=None, interval='1m', startTimes_dict=None, futs=False, logger=None):
+def candles_forwardfill_fn(symbols, dbs=None, interval='1m', startTimes_dict=None, futs=False, mark=False, index=False, logger=None):
     """ for backfilling candles start at present and go backward 
         until either backfill is reached or no new data comes in on each subsequent request"""
 
@@ -50,7 +50,7 @@ def candles_forwardfill_fn(symbols, dbs=None, interval='1m', startTimes_dict=Non
             startTime = startTimes_dict[symbol]
             startTimes_prev.append(startTime)     
    
-    data = asyncio.run(get_candles(**dict(symbols=symbols, interval=interval, limit=limit, startTimes=startTimes_prev, futs=futs, logger=logger)))
+    data = asyncio.run(get_candles(**dict(symbols=symbols, interval=interval, limit=limit, startTimes=startTimes_prev, futs=futs, mark=mark, index=index, logger=logger)))
 
     for symbol in symbols:
         if len(data[symbol])>0: last_insert_print[symbol]=data[symbol][-1][0]
@@ -139,7 +139,7 @@ def candles_forwardfill_fn(symbols, dbs=None, interval='1m', startTimes_dict=Non
         if len(symbols)==0:
             break
 
-        data = asyncio.run(get_candles(**dict(symbols=symbols, interval=interval, limit=limit, startTimes=startTimes, futs=futs, logger=logger)))
+        data = asyncio.run(get_candles(**dict(symbols=symbols, interval=interval, limit=limit, startTimes=startTimes, futs=futs, mark=mark, index=index, logger=logger)))
 
         total_requests_per_symbol += 1
         current_minute_weight += len(symbols)

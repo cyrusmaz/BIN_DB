@@ -2,8 +2,8 @@ from read_from_db_fns import *
 
 param_path='/home/cm/Documents/PY_DEV/DB/BINANCE/params.json'
 
-read_symbols_from_db(param_path=param_path)
-
+symbols = read_symbols_from_db(param_path=param_path)
+raw_dump_exchange_infos = read_symbols_from_db(param_path=param_path, raw_dump=True)
 
 
 symbol='BTCUSDT'

@@ -38,7 +38,7 @@ class symbols_db():
         if self.logger is not None: 
             self.logger.info(dict(origin='symbols_db', payload=payload))
 
-    def get_last(self):
+    def get_last(self, raw_dump=False):
         row = self.query(f"SELECT * FROM SYMBOLS_TABLE WHERE insert_timestamp=(SELECT last_insert_time FROM LAST_INSERT_VIEW)") 
         if len(row)>1:
             print('TOO MANY MATCHING ENTRIES - SOMETHING IS WRONG? ')
@@ -46,14 +46,16 @@ class symbols_db():
         if len(row)==0:
             print('no matches')
             return dict(usd_futs=[], spot=[], coin_futs=[])
-        return json.loads(row[0][0])
+
+        if not raw_dump: return json.loads(row[0][0])
+        else: return json.loads(row[0][6])
 
     # def delete_last(self):
     #     self.execute(f"DELETE FROM SYMBOLS_TABLE WHERE insert_time=(SELECT last_oi_time FROM LAST_INSERT_VIEW)") 
        
     def create_candle_table(self):
         create_table = f'''CREATE TABLE IF NOT EXISTS SYMBOLS_TABLE
-                           (all_symbols TEXT, added TEXT, subtracted TEXT, spot_updated TEXT, usd_futs_updated TEXT, coin_futs_updated TEXT, insert_timestamp TEXT, insert_timestamp_string TEXT)'''
+                           (all_symbols TEXT, added TEXT, subtracted TEXT, spot_updated TEXT, usd_futs_updated TEXT, coin_futs_updated TEXT, raw_dump TEXT, insert_timestamp TEXT, insert_timestamp_string TEXT)'''
         self.cur.execute(create_table)
         self.con.commit()
 
@@ -90,7 +92,7 @@ class symbols_db():
         insert_list.append(inserted_at_string)
 
         # INSERT AND COMMIT
-        self.cur.executemany(f'INSERT INTO SYMBOLS_TABLE VALUES (?,?,?,?,?,?,?,?)', [insert_list])
+        self.cur.executemany(f'INSERT INTO SYMBOLS_TABLE VALUES (?,?,?,?,?,?,?,?,?)', [insert_list])
         self.con.commit()
         # print(f"SYMBOLS_TABLE ({self.symbol}) - {len(insert_list)} entries ({insert_list[0][2]} to {insert_list[-1][2]}) - inserted at {inserted_at}")
 
@@ -104,7 +106,7 @@ class symbols_db():
         self.con.commit()
 
 
-    def update_symbols_db(self, new_symbols_dict):
+    def update_symbols_db(self, new_symbols_dict, exchange_infos_dict):
         """ CHECK IF NEW SYMBOLS ADDED OR SUBTRACED, IF SO THEN UPDATE TABLE"""
         last_insert=self.get_last()
 
@@ -137,7 +139,8 @@ class symbols_db():
                 dict(spot=subtracted_spot,usd_futs=subtracted_usd_futs, coin_futs=subtracted_coin_futs),
                 spot_updated,
                 usd_futs_updated,
-                coin_futs_updated]
+                coin_futs_updated,
+                exchange_infos_dict]
 
             self.insert_multiple(new_insert_object)
 
