@@ -31,6 +31,11 @@ def candle_fill_wrapper(
     startTimes_dict=None,
     logger=None, 
     backfill=None):
+    """spot candles:     futs=False, mark=False, index=False
+       usd futs candles: futs=True,  mark=False, index=False
+       mark:             futs=True,  mark=True,  index=False
+       index:            futs=True,  mark=False, index=True
+       """
     
     j=0
     for batch_symbols in batch_symbols_fn(symbols=symbols, batch_size=batch_size):
@@ -40,7 +45,7 @@ def candle_fill_wrapper(
         dbs={}
         # batch_symbols=list(filter(lambda x: x!='BNBBTC', batch_symbols))
         for s in batch_symbols:
-            if futs and not mark and not index:
+            if not mark and not index:
                 db_name=f'{s}_{interval}_candle.db'
             elif futs and mark and not index:
                 db_name=f'{s}_{interval}_mark.db'
@@ -159,6 +164,7 @@ def prepare_for_funding_fetch(dir_, symbols, db_args_dict):
 
 
 def prepare_for_oi_fetch(dir_, symbols, oi_interval, db_args_dict, check_existence=True):
+
     symbols_exist = []
     symbols_dne = []
     dbs_exist = {}
@@ -185,6 +191,13 @@ def prepare_for_oi_fetch(dir_, symbols, oi_interval, db_args_dict, check_existen
 
 def prepare_for_candle_fetch(dir_, symbols, candle_interval, db_args_dict, futs=False, mark=False, index=False, check_existence=True, logger=None):
     """if check_existence is True then check if db exists and has at least one record"""
+    """spot candles:     futs=False, mark=False, index=False
+       usd futs candles: futs=True,  mark=False, index=False
+       mark:             futs=True,  mark=True,  index=False
+       index:            futs=True,  mark=False, index=True
+       """
+        
+    
     symbols_exist = []
     symbols_dne = []
     j=0
@@ -195,7 +208,7 @@ def prepare_for_candle_fetch(dir_, symbols, candle_interval, db_args_dict, futs=
         print(j)
         # db_name=f'{s}_{candle_interval}_candle.db'
 
-        if futs and not mark and not index:
+        if not mark and not index:
             db_name=f'{s}_{candle_interval}_candle.db'
         elif futs and mark and not index:
             db_name=f'{s}_{candle_interval}_mark.db'
