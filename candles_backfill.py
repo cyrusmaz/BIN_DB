@@ -1,22 +1,27 @@
 from db_helpers import *
-from API_RATES import *
+# from API_RATES import *
 from async_fns import get_candles
 
 import asyncio
 import time
-from copy import deepcopy
+# from copy import deepcopy
 from math import ceil
 
-def candles_backfill_fn(symbols, dbs=None, interval='1m', backfill=8, futs=False, mark=False, index=False, logger=None, memory_efficient=True):
+def candles_backfill_fn(symbols,  interval, backfill, usd_futs, coin_futs, mark,limit, rate_limit, index, dbs=None, logger=None, memory_efficient=True):
     """ for backfilling candles start at present and go backward 
         until either backfill is reached or no new data comes in on each subsequent request"""
 
-    if futs is False:
-        limit=SPOT_CANDLE_LIMIT
-        rate_limit = SPOT_CANDLE_RATE_LIMIT
-    if futs is True: 
-        limit = FUTS_CANDLE_LIMIT
-        rate_limit=FUTS_CANDLE_RATE_LIMIT
+    # if not usd_futs and not coin_futs:
+    #     limit=SPOT_CANDLE_LIMIT
+    #     rate_limit = SPOT_CANDLE_RATE_LIMIT
+
+    # elif usd_futs and not coin_futs: 
+    #     limit = USD_FUTS_CANDLE_LIMIT
+    #     rate_limit=USD_FUTS_CANDLE_RATE_LIMIT
+    
+    # elif not usd_futs and coin_futs: 
+    #     limit = COIN_FUTS_CANDLE_LIMIT
+    #     rate_limit = COIN_FUTS_CANDLE_RATE_LIMIT
 
 
     # symbols = deepcopy(symbols)
@@ -50,7 +55,7 @@ def candles_backfill_fn(symbols, dbs=None, interval='1m', backfill=8, futs=False
     if len(endTimes_prev)==0:
         endTimes_prev=None
 
-    data = asyncio.run(get_candles(**dict(symbols=symbols, interval=interval, limit=limit, endTimes=endTimes_prev, futs=futs, mark=mark, index=index, logger=logger)))
+    data = asyncio.run(get_candles(**dict(symbols=symbols, interval=interval, limit=limit, endTimes=endTimes_prev, usd_futs=usd_futs, coin_futs=coin_futs, mark=mark, index=index, logger=logger)))
     current_minute_weight += len(symbols)
     
 
@@ -73,7 +78,7 @@ def candles_backfill_fn(symbols, dbs=None, interval='1m', backfill=8, futs=False
                     payload=dict(
                         reason='backfilling from inception - zero results',
                         interval=interval,
-                        futs=futs,
+                        usd_futs=usd_futs, coin_futs=coin_futs, 
                         num_dropped_symbols=len(pops),
                         dropped_symbols=pops,
                         )))  
@@ -130,7 +135,7 @@ def candles_backfill_fn(symbols, dbs=None, interval='1m', backfill=8, futs=False
                             payload=dict(
                                 reason='reached inception time',
                                 interval=interval,
-                                futs=futs,
+                                usd_futs=usd_futs, coin_futs=coin_futs, 
                                 num_dropped_symbols=len(pops),
                                 dropped_symbols=pops,
                                 )))  
@@ -148,7 +153,7 @@ def candles_backfill_fn(symbols, dbs=None, interval='1m', backfill=8, futs=False
         if len(symbols)==0:
             break
 
-        new_data = asyncio.run(get_candles(**dict(symbols=symbols, interval=interval, limit=limit, endTimes=endTimes, futs=futs, mark=mark, index=index, logger=logger)))
+        new_data = asyncio.run(get_candles(**dict(symbols=symbols, interval=interval, limit=limit, endTimes=endTimes, usd_futs=usd_futs, coin_futs=coin_futs,  mark=mark, index=index, logger=logger)))
         current_minute_weight += len(symbols)
 
         total_requests_per_symbol += 1
@@ -175,7 +180,7 @@ def candles_backfill_fn(symbols, dbs=None, interval='1m', backfill=8, futs=False
 
     data = {k:v[-backfill:] for k,v in data.items()} if backfill is not None else data
     for k,v in data.items():
-        print(f'candles_backfill_fn:{k} futs:{futs} interval:{interval} inserted:{len(v)} last:{long_to_datetime_str(last_insert_print[k])}')
+        print(f'candles_backfill_fn:{k} usd_futs:{usd_futs} coin_futs:{coin_futs}, mark={mark}, index={index}, interval:{interval} inserted:{len(v)} last:{long_to_datetime_str(last_insert_print[k])}')
         
     return data
 

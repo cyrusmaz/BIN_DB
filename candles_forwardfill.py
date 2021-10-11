@@ -3,25 +3,29 @@
 
 import asyncio
 import time
-from copy import deepcopy
-from math import ceil
+# from copy import deepcopy
+# from math import ceil
 from db_helpers import *
-from API_RATES import *
+# from API_RATES import *
 from async_fns import get_candles
 
 
 
-def candles_forwardfill_fn(symbols, dbs=None, interval='1m', startTimes_dict=None, futs=False, mark=False, index=False, logger=None):
+def candles_forwardfill_fn(symbols, interval, usd_futs, coin_futs, mark, index, limit, rate_limit, startTimes_dict=None, dbs=None, logger=None):
     """ for backfilling candles start at present and go backward 
         until either backfill is reached or no new data comes in on each subsequent request"""
 
-    if futs is False:
-        limit=SPOT_CANDLE_LIMIT
-        rate_limit = SPOT_CANDLE_RATE_LIMIT
-    if futs is True: 
-        limit = FUTS_CANDLE_LIMIT
-        rate_limit=FUTS_CANDLE_RATE_LIMIT
+    # if not usd_futs and not coin_futs:
+    #     limit=SPOT_CANDLE_LIMIT
+    #     rate_limit = SPOT_CANDLE_RATE_LIMIT
 
+    # elif usd_futs and not coin_futs: 
+    #     limit = USD_FUTS_CANDLE_LIMIT
+    #     rate_limit=USD_FUTS_CANDLE_RATE_LIMIT
+    
+    # elif not usd_futs and coin_futs: 
+    #     limit = COIN_FUTS_CANDLE_LIMIT
+    #     rate_limit = COIN_FUTS_CANDLE_RATE_LIMIT
 
     # symbols = deepcopy(symbols)
     if symbols is None or len(symbols)==0:
@@ -50,7 +54,7 @@ def candles_forwardfill_fn(symbols, dbs=None, interval='1m', startTimes_dict=Non
             startTime = startTimes_dict[symbol]
             startTimes_prev.append(startTime)     
    
-    data = asyncio.run(get_candles(**dict(symbols=symbols, interval=interval, limit=limit, startTimes=startTimes_prev, futs=futs, mark=mark, index=index, logger=logger)))
+    data = asyncio.run(get_candles(**dict(symbols=symbols, interval=interval, limit=limit, startTimes=startTimes_prev, usd_futs=usd_futs, coin_futs=coin_futs, mark=mark, index=index, logger=logger)))
 
     for symbol in symbols:
         if len(data[symbol])>0: last_insert_print[symbol]=data[symbol][-1][0]
@@ -69,7 +73,7 @@ def candles_forwardfill_fn(symbols, dbs=None, interval='1m', startTimes_dict=Non
                     payload=dict(
                         reason='filling into present - zero results',
                         interval=interval,
-                        futs=futs,
+                        usd_futs=usd_futs, coin_futs=coin_futs,
                         num_dropped_symbols=len(pops),
                         dropped_symbols=pops,
                         )))  
@@ -122,7 +126,7 @@ def candles_forwardfill_fn(symbols, dbs=None, interval='1m', startTimes_dict=Non
                             payload=dict(
                                 reason='reached present time',
                                 interval=interval,
-                                futs=futs,
+                                usd_futs=usd_futs, coin_futs=coin_futs,
                                 num_dropped_symbols=len(pops),
                                 dropped_symbols=pops,
                                 )))  
@@ -139,7 +143,7 @@ def candles_forwardfill_fn(symbols, dbs=None, interval='1m', startTimes_dict=Non
         if len(symbols)==0:
             break
 
-        data = asyncio.run(get_candles(**dict(symbols=symbols, interval=interval, limit=limit, startTimes=startTimes, futs=futs, mark=mark, index=index, logger=logger)))
+        data = asyncio.run(get_candles(**dict(symbols=symbols, interval=interval, limit=limit, startTimes=startTimes, usd_futs=usd_futs, coin_futs=coin_futs, mark=mark, index=index, logger=logger)))
 
         total_requests_per_symbol += 1
         current_minute_weight += len(symbols)
@@ -164,7 +168,7 @@ def candles_forwardfill_fn(symbols, dbs=None, interval='1m', startTimes_dict=Non
     for k,v in data.items():
 
 
-        print(f'candles_forwardfill_fn:{k} futs:{futs} interval:{interval} inserted:{len(v)} last entry:{long_to_datetime_str(last_insert_print[k])}')
+        print(f'candles_forwardfill_fn:{k} usd_futs:{usd_futs}, coin_futs={coin_futs}, mark={mark}, index={index}, interval:{interval} inserted:{len(v)} last entry:{long_to_datetime_str(last_insert_print[k])}')
         
     return data
 

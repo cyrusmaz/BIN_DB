@@ -149,7 +149,7 @@ class candle_db():
         # INSERT AND COMMIT
         self.cur.executemany(f'INSERT INTO CANDLE_TABLE VALUES (?,?,?,?,?,?,?,?,?)', insert_list)
         self.con.commit()
-        print(f"CANDLE_TABLE INSERT ({self.symbol} {self.type}) -  {insert_list[0][1]}-{insert_list[-1][1]}  {len(insert_list)} entries inserted at {inserted_at}")
+        print(f"CANDLE_TABLE INSERT ({self.symbol} {self.type} {self.interval}) -  {insert_list[0][1]}-{insert_list[-1][1]}  {len(insert_list)} entries inserted at {inserted_at}")
 
     def query(self, query):
         self.cur.execute(query)

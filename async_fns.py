@@ -6,12 +6,25 @@ import json
 from db_helpers import long_to_datetime_str
 
 # CANDLES
-async def get_candles_worker(symbol, interval, limit, startTime=None, endTime=None, logger=None, futs=False):
-    print(f'async get_candles_worker({symbol}, {interval}, limit={limit}, startTime={long_to_datetime_str(startTime)}, endTime={long_to_datetime_str(endTime)}, futs={futs})')
-    if futs is True: 
-        klines_endpoint = 'https://fapi.binance.com/fapi/v1/klines?symbol={}&interval={}&limit={}'
-    else: 
+async def get_candles_worker(symbol, interval, limit, startTime=None, endTime=None, logger=None, usd_futs=False, coin_futs=False, index=False, mark=False):
+    print(f'async get_candles_worker({symbol}, {interval}, limit={limit}, startTime={long_to_datetime_str(startTime)}, endTime={long_to_datetime_str(endTime)}, usd_futs={usd_futs}, coin_futs={coin_futs}, index={index}, mark={mark})')
+    if not usd_futs and not coin_futs and not index and not mark: 
         klines_endpoint = 'https://api.binance.com/api/v1/klines?symbol={}&interval={}&limit={}'
+    elif usd_futs: 
+        if not index and not mark: 
+            klines_endpoint = 'https://fapi.binance.com/fapi/v1/klines?symbol={}&interval={}&limit={}'
+        if index and not mark:
+            klines_endpoint = 'https://fapi.binance.com/fapi/v1/indexPriceKlines?pair={}&interval={}&limit={}'
+        elif not index and mark:
+            klines_endpoint = 'https://fapi.binance.com/fapi/v1/markPriceKlines?symbol={}&interval={}&limit={}'
+    elif coin_futs: 
+        if not index and not mark: 
+            klines_endpoint = 'https://dapi.binance.com/dapi/v1/klines?symbol={}&interval={}&limit={}'
+        if index and not mark:
+            klines_endpoint = 'https://dapi.binance.com/dapi/v1/indexPriceKlines?pair={}&interval={}&limit={}'
+        elif not index and mark:
+            klines_endpoint = 'https://dapi.binance.com/dapi/v1/markPriceKlines?symbol={}&interval={}&limit={}'        
+
     url = klines_endpoint.format(symbol, interval, limit)
     if startTime is not None: 
         url = url + '&startTime={}'.format(startTime)
@@ -32,18 +45,28 @@ async def get_candles_worker(symbol, interval, limit, startTime=None, endTime=No
         return output
     except Exception as e:
         if logger is not None: 
-            logger.critical(dict(origin='get_candles_worker', payload=dict(error=e, symbol=symbol,futs=futs, interval=interval, url=url)))
+            logger.critical(dict(origin='get_candles_worker', payload=dict(error=e, symbol=symbol, usd_futs=usd_futs, coin_futs=coin_futs, interval=interval, url=url)))
         raise e
 
 
-async def get_candles(symbols, interval='1m',limit=1000, startTimes=None, endTimes=None, futs=False, logger=None, **kwargs):
+async def get_candles(symbols, interval='1m',limit=1000, startTimes=None, endTimes=None, usd_futs=False, coin_futs=False, index=False, mark=False, logger=None, **kwargs):
     if endTimes is None:
         endTimes=[None]*len(symbols)
     if startTimes is None:
         startTimes=[None]*len(symbols)        
 
     try:
-        result = await asyncio.gather(*[get_candles_worker(symbol=symbol, interval=interval, limit=limit, startTime=startTime, endTime=endTime, futs=futs) for symbol, startTime,endTime in zip(symbols,startTimes,endTimes)])
+        result = await asyncio.gather(*[get_candles_worker(
+            symbol=symbol, 
+            interval=interval, 
+            limit=limit, 
+            startTime=startTime, 
+            endTime=endTime, 
+            usd_futs=usd_futs, 
+            coin_futs=coin_futs,
+            index=index, 
+            mark=mark) for symbol, startTime,endTime in zip(symbols,startTimes,endTimes)])
+
     except Exception as e:
         logger.critical(dict(origin='get_candles', payload=e))
         raise e
@@ -64,7 +87,8 @@ async def get_candles(symbols, interval='1m',limit=1000, startTimes=None, endTim
                 origin='get_candles', 
                 payload= dict(
                 interval=interval, 
-                futs=futs, 
+                usd_futs=usd_futs, 
+                coin_futs=coin_futs,
                 num_symbols_dropped=len(pops),
                 unique_msgs=list(set([json.dumps(output[s]) for s in pops])), 
                 # all_msgs = [output[s] for s in pops], 
@@ -80,23 +104,23 @@ async def get_candles(symbols, interval='1m',limit=1000, startTimes=None, endTim
     return output
 
 # FUNDING AND OI
-async def get_futs_stat_worker(symbol, stat=None, period=None, limit=500, startTime=None, endTime=None, logger=None, **kwargs):
-    print(f'async get_futs_stat_worker({symbol}, stat={stat},period={period}, limit={limit}, startTime={long_to_datetime_str(startTime)}, endTime={long_to_datetime_str(endTime)})')
-    if stat == 'funding':
-        endpoint = "https://fapi.binance.com/fapi/v1/fundingRate?symbol={}&limit={}"
-        url = endpoint.format(symbol, limit)
-    elif stat == 'oi':
-        endpoint = "https://fapi.binance.com/futures/data/openInterestHist?symbol={}&period={}&limit={}"
-        url = endpoint.format(symbol, period,limit)
-    # elif stat == 'top_acc':
-    #     endpoint = "https://fapi.binance.com/futures/data/topLongShortAccountRatio?symbol={}&period={}&limit={}"  
-    #     url = endpoint.format(symbol, period,limit)      
-    # elif stat == 'top_pos':
-    #     endpoint = "https://fapi.binance.com/futures/data/topLongShortPositionRatio?symbol={}&period={}&limit={}"  
-    #     url = endpoint.format(symbol, period,limit)      
-    # elif stat == 'global_acc':
-    #     endpoint = "https://fapi.binance.com/futures/data/globalLongShortAccountRatio?symbol={}&period={}&limit={}"    
-    #     url = endpoint.format(symbol, period,limit)    
+async def get_futs_stat_worker(symbol, stat=None, period=None, limit=500, usd_futs=False, coin_futs=False, startTime=None, endTime=None, logger=None, **kwargs):
+    print(f'async get_futs_stat_worker({symbol}, stat={stat},period={period}, limit={limit},usd_futs={usd_futs}, coin_fut{coin_futs}, startTime={long_to_datetime_str(startTime)}, endTime={long_to_datetime_str(endTime)})')
+    if usd_futs:
+        if stat == 'funding':
+            endpoint = "https://fapi.binance.com/fapi/v1/fundingRate?symbol={}&limit={}"
+            url = endpoint.format(symbol, limit)
+        elif stat == 'oi':
+            endpoint = "https://fapi.binance.com/futures/data/openInterestHist?symbol={}&period={}&limit={}"
+            url = endpoint.format(symbol, period,limit)
+    elif coin_futs:
+        if stat == 'funding':
+            endpoint = "https://dapi.binance.com/dapi/v1/fundingRate?symbol={}&limit={}"
+            url = endpoint.format(symbol, limit)
+        elif stat == 'oi':
+            endpoint = "https://dapi.binance.com/futures/data/openInterestHist?symbol={}&period={}&limit={}"
+            url = endpoint.format(symbol, period,limit)
+
 
     if startTime is not None: 
         url = url + '&startTime={}'.format(startTime)
@@ -112,17 +136,17 @@ async def get_futs_stat_worker(symbol, stat=None, period=None, limit=500, startT
         return output
     except Exception as e:
         if logger is not None: 
-            logger.critical(dict(origin='get_futs_stat_worker', payload=dict(error=e, symbol=symbol, url=url)))
+            logger.critical(dict(origin='get_futs_stat_worker', payload=dict(error=e, symbol=symbol, stat=stat, period=period,limit=limit, usd_futs=usd_futs, coin_futs=coin_futs, startTime=startTime, endTime=endTime, url=url)))
         raise e
 
 
-async def get_futs_stats(symbols, stat, limit, period='5m',startTimes=None, endTimes=None, logger=None, **kwargs):
+async def get_futs_stats(symbols, stat, limit, period='5m',usd_futs=False, coin_futs=False, startTimes=None, endTimes=None, logger=None, **kwargs):
     if endTimes is None:
         endTimes=[None]*len(symbols)
     if startTimes is None:
         startTimes=[None]*len(symbols)        
     try:
-        result = await asyncio.gather(*[get_futs_stat_worker(symbol=symbol, stat=stat, period=period,limit=limit, startTime=startTime, endTime=endTime) for symbol, startTime,endTime in zip(symbols,startTimes,endTimes)])
+        result = await asyncio.gather(*[get_futs_stat_worker(symbol=symbol, stat=stat, period=period,limit=limit, usd_futs=usd_futs, coin_futs=coin_futs, startTime=startTime, endTime=endTime) for symbol, startTime,endTime in zip(symbols,startTimes,endTimes)])
     except Exception as e:
         logger.critical(dict(origin='get_futs_stats', payload=e))
         raise e
@@ -144,6 +168,8 @@ async def get_futs_stats(symbols, stat, limit, period='5m',startTimes=None, endT
                     origin='get_futs_stats', 
                     payload= dict(
                         stat=stat, 
+                        usd_futs=usd_futs, 
+                        coin_futs=coin_futs,
                         num_symbols_dropped=len(pops_dict_output),
                         unique_msgs=list(set([json.dumps(output[s]) for s in pops_dict_output])), 
                         # all_msgs = [output[s] for s in pops], 
@@ -163,6 +189,8 @@ async def get_futs_stats(symbols, stat, limit, period='5m',startTimes=None, endT
                     origin='get_futs_stats', 
                     payload=dict(
                         stat=stat, 
+                        usd_futs=usd_futs, 
+                        coin_futs=coin_futs,
                         num_symbols_dropped=len(pops_empty_output),
                         symbols_dropped=pops_empty_output)
                         ))
