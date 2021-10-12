@@ -25,13 +25,11 @@ class funding_db():
             print(f"CREATING DIRECTORY: {DB_DIRECTORY}")
             os.makedirs(DB_DIRECTORY)
 
-
         if READ_ONLY: 
             self.con = sqlite3.connect('file:'+DB_DIRECTORY+DB_NAME+'?mode=ro', uri=True)   
         else: 
             self.con = sqlite3.connect(DB_DIRECTORY+DB_NAME)
         self.cur = self.con.cursor()
-
 
         self.create_info_table()
         self.create_candle_table()
@@ -39,6 +37,7 @@ class funding_db():
 
 
     def get_last(self):
+        print(f'FundingDBClass.get_last() {self.symbol}, {self.type}, {self.exchange}')
         row = self.query(f"SELECT funding FROM FUNDING_TABLE WHERE funding_time=(SELECT last_funding_time FROM LAST_INSERT_VIEW)") 
         if len(row)>1:
             print('TOO MANY MATCHING ENTRIES - SOMETHING IS WRONG? ')
@@ -107,7 +106,7 @@ class funding_db():
         # INSERT AND COMMIT
         self.cur.executemany(f'INSERT INTO FUNDING_TABLE VALUES (?,?,?,?,?,?)', insert_list)
         self.con.commit()
-        print(f"FUNDING_TABLE ({self.symbol}) - {len(insert_list)} entries ({insert_list[0][2]} to {insert_list[-1][2]}) - inserted at {inserted_at}")
+        print(f"FUNDING_TABLE ({self.symbol} {self.type}) - {len(insert_list)} entries ({insert_list[0][2]} to {insert_list[-1][2]}) - inserted at {inserted_at}")
 
     def query(self, query):
         self.cur.execute(query)

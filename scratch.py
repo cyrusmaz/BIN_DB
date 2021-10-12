@@ -6,6 +6,14 @@ param_path='/home/cm/Documents/PY_DEV/DB/BINANCE/params.json'
 read_symbols_from_db(param_path=param_path)
 
 
+import os 
+os.chdir('/home/cm/Documents/PY_DEV/DB/BINANCE/CANDLES/USD_FUTS/4h')
+files = os.listdir()
+news = list(filter(lambda x: len(x.split('candle.db'))==2 and x.split('candle.db')[1]=='',files  ))
+
+for s in news: 
+    os.rename(s, s.split('candle.db')[0]+'usdf_candles.db')
+
 
 symbol='BTCUSDT'
 oi_interval='5m'

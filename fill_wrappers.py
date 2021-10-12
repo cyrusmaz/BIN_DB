@@ -67,7 +67,7 @@ def candle_fill_wrapper(
                     db_name=f'{s}_{interval}_usdf_candles.db'
                 if mark and not index:
                     db_name=f'{s}_{interval}_usdf_mark.db'
-                elif usd_futs and not mark and index:
+                elif not mark and index:
                     db_name=f'{s}_{interval}_usdf_index.db'
 
             elif coin_futs:     
@@ -144,18 +144,18 @@ def candle_fill_wrapper(
                     limit=limit, rate_limit=rate_limit, 
                     logger=logger)                    
 
-        print(f'time.sleep(60) - candle_fill_wrapper() end of batch {j}, batch_size={batch_size}, symbols:{len(symbols)},usd_futs:{usd_futs},coin_futs:{coin_futs}, mark:{mark}, index:{index}, interval:{interval}, forward:{forward}')
+        print(f'{datetime.datetime.now()} time.sleep(60) - candle_fill_wrapper() end of batch {j}, batch_size={batch_size}, symbols:{len(symbols)},usd_futs:{usd_futs},coin_futs:{coin_futs}, mark:{mark}, index:{index}, interval:{interval}, forward:{forward}')
         time.sleep(60)
 
     print(f'candle_fill_wrapper() complete. usd_futs:{usd_futs},coin_futs:{coin_futs}, mark:{mark}, index:{index}, interval:{interval}, forward:{forward}')
 
 
-def funding_fill_wrapper(symbols, dbs, batch_size, usd_futs=False, coin_futs=False, logger=None):
+def funding_fill_wrapper(symbols, dbs, batch_size, usd_futs, coin_futs, limit, rate_limit, logger=None):
     j=0
     for batch_symbols in batch_symbols_fn(symbols=symbols, batch_size=batch_size):
         j+=1
         try:
-            funding_forwardfill_fn(symbols=batch_symbols,dbs=dbs, usd_futs=usd_futs, coin_futs=coin_futs, logger=logger)
+            funding_forwardfill_fn(symbols=batch_symbols,dbs=dbs, usd_futs=usd_futs, coin_futs=coin_futs, limit=limit, rate_limit=rate_limit, logger=logger)
         except aiohttp.client_exceptions.ServerDisconnectedError: 
             exception_time = datetime.datetime.now()
             if logger is not None: 
@@ -168,9 +168,10 @@ def funding_fill_wrapper(symbols, dbs, batch_size, usd_futs=False, coin_futs=Fal
                             symbols=batch_symbols,)))
             print(f'funding_fill_wrapper {exception_time} - got an aiohttp.client_exceptions.ServerDisconnectedError, sleeping for 60 seconds before reattempting')
             print(f'funding_fill_wrapper {exception_time} - batch_size is {batch_size}, symbols remaining: {len(batch_symbols)}')
+            print(f'usd_futs:{usd_futs},coin_futs:{coin_futs}')
             time.sleep(60)
-            funding_forwardfill_fn(symbols=batch_symbols,dbs=dbs, usd_futs=usd_futs, coin_futs=coin_futs, logger=logger)
-        print(f'time.sleep(60) - funding_fill_wrapper() end of batch {j}, batch_size={batch_size}, symbols:{len(symbols)}.')
+            funding_forwardfill_fn(symbols=batch_symbols,dbs=dbs, usd_futs=usd_futs, coin_futs=coin_futs, limit=limit, rate_limit=rate_limit, logger=logger)
+        print(f'{datetime.datetime.now()} time.sleep(60) - funding_fill_wrapper() end of batch {j}, usd_futs:{usd_futs}, coin_futs:{coin_futs}, batch_size={batch_size}, symbols:{len(symbols)}.')
         time.sleep(60)
     print(f'funding_fill_wrapper() complete')
 
@@ -178,21 +179,49 @@ def funding_fill_wrapper(symbols, dbs, batch_size, usd_futs=False, coin_futs=Fal
 
 def oi_fill_wrapper(
     symbols, 
-    dbs, 
+    # dbs, 
     interval, 
     forward, 
     batch_size, 
-    usd_futs=False, 
-    coin_futs=False, 
-    logger=None):
+    usd_futs, 
+    coin_futs, 
+    limit,
+    rate_limit,
+    db_args_dict,
+    startTimes_dict,
+    dir_,
+    logger=None,
+    coin_futs_details=None):
     j=0
     for batch_symbols in batch_symbols_fn(symbols=symbols, batch_size=batch_size):
         j+=1
+        dbs={}
+        for s in batch_symbols:
+            if usd_futs:
+                db_name=f'{s}_{interval}_usdf_oi.db'
+                db_dir=f'{dir_}{interval}/'
+            elif coin_futs: 
+                db_name=f'{s}_{interval}_coinf_oi.db'
+                db_dir=f'{dir_}{interval}/'            
+            # db=oi_db(DB_DIRECTORY=db_dir, DB_NAME=db_name, SYMBOL=s, INTERVAL=oi_interval, TYPE='usd_usd_futs', EXCHANGE=exchange)
+            dbs[s]=oi_db(DB_DIRECTORY=db_dir, DB_NAME=db_name, SYMBOL=s, INTERVAL=interval, **db_args_dict )
         try: 
             if forward is True: 
-                oi_forwardfill_fn(symbols=batch_symbols,dbs=dbs, interval=interval, usd_futs=usd_futs, coin_futs=coin_futs, logger=logger)          
+                oi_forwardfill_fn(
+                    symbols=batch_symbols,dbs=dbs, 
+                    interval=interval, usd_futs=usd_futs, 
+                    coin_futs=coin_futs,limit=limit, 
+                    rate_limit=rate_limit,  logger=logger,
+                    startTimes_dict=startTimes_dict, 
+                    coin_futs_details=coin_futs_details)          
             elif forward is False:
-                oi_backfill_fn(symbols=batch_symbols,dbs=dbs, interval=interval, usd_futs=usd_futs, coin_futs=coin_futs, backfill=None,logger=logger)
+                oi_backfill_fn(
+                    symbols=batch_symbols,dbs=dbs, 
+                    interval=interval, usd_futs=usd_futs, 
+                    coin_futs=coin_futs,limit=limit, 
+                    rate_limit=rate_limit,  backfill=None,
+                    logger=logger,coin_futs_details=coin_futs_details)
+
         except aiohttp.client_exceptions.ServerDisconnectedError: 
             exception_time = datetime.datetime.now()
             if logger is not None: 
@@ -207,15 +236,26 @@ def oi_fill_wrapper(
                             # usd_futs=usd_futs,
                             symbols=batch_symbols,)))
 
-            print(f'candle_fill_wrapper {exception_time} - got an aiohttp.client_exceptions.ServerDisconnectedError, sleeping for 60 seconds before reattempting')
-            print(f'candle_fill_wrapper {exception_time} - batch_size is {batch_size}, symbols remaining: {len(batch_symbols)}, forward: {forward}')
+            print(f'oi_fill_wrapper {exception_time} - got an aiohttp.client_exceptions.ServerDisconnectedError, sleeping for 60 seconds before reattempting')
+            print(f'oi_fill_wrapper {exception_time} - batch_size is {batch_size}, symbols remaining: {len(batch_symbols)}, forward: {forward}')
+            print(f'usd_futs:{usd_futs},coin_futs:{coin_futs}')
             time.sleep(60)
             if forward is True: 
-                oi_forwardfill_fn(symbols=batch_symbols,dbs=dbs, interval=interval, usd_futs=usd_futs, coin_futs=coin_futs, logger=logger)          
+                oi_forwardfill_fn(
+                    symbols=batch_symbols,dbs=dbs, 
+                    interval=interval, usd_futs=usd_futs, 
+                    coin_futs=coin_futs,
+                    limit=limit, rate_limit=rate_limit,  
+                    logger=logger ,coin_futs_details=coin_futs_details)          
             elif forward is False:
-                oi_backfill_fn(symbols=batch_symbols,dbs=dbs, interval=interval, usd_futs=usd_futs, coin_futs=coin_futs, backfill=None,logger=logger) 
+                oi_backfill_fn(
+                    symbols=batch_symbols,dbs=dbs, 
+                    interval=interval, usd_futs=usd_futs, 
+                    coin_futs=coin_futs,limit=limit, 
+                    rate_limit=rate_limit,  backfill=None,
+                    logger=logger, coin_futs_details=coin_futs_details) 
                                  
-        print(f'time.sleep(60) - oi_fill_wrapper() end of batch {j}, batch_size={batch_size}, symbols:{len(symbols)}, interval:{interval}, forward:{forward}')
+        print(f'{datetime.datetime.now()} time.sleep(60) - oi_fill_wrapper() end of batch {j}, batch_size={batch_size}, symbols:{len(symbols)}, interval:{interval}, forward:{forward}')
         time.sleep(60)
 
     print(f'oi_fill_wrapper() complete')
@@ -249,10 +289,14 @@ def prepare_for_oi_fetch(
     check_existence=True):
     symbols_exist = []
     symbols_dne = []
-    dbs_exist = {}
-    dbs_dne = {}
+    # dbs_exist = {}
+    # dbs_dne = {}
+    j=0
     # ESTABLISH WHICH SYMBOL HAS AN EXISTING DB WITH AT LEAST ONE RECORD, AND WHICH DOESN'T
+    startTimes_dict = dict()
     for s in symbols:
+        j+=1
+        print(j)
         if usd_futs:
             db_name=f'{s}_{oi_interval}_usdf_oi.db'
             db_dir=f'{dir_}{oi_interval}/'
@@ -262,17 +306,27 @@ def prepare_for_oi_fetch(
         # db=oi_db(DB_DIRECTORY=db_dir, DB_NAME=db_name, SYMBOL=s, INTERVAL=oi_interval, TYPE='usd_usd_futs', EXCHANGE=exchange)
         db=oi_db(DB_DIRECTORY=db_dir, DB_NAME=db_name, SYMBOL=s, INTERVAL=oi_interval, **db_args_dict )
         if check_existence is True: 
-            if db.get_last() is not None: 
+            last_insert = db.get_last()
+            if last_insert is not None: 
+                startTime = last_insert['timestamp']
                 symbols_exist.append(s)
-                dbs_exist[s]=db
+                startTimes_dict[s]=startTime
+                # dbs_exist[s]=db
             else:
                 symbols_dne.append(s)
-                dbs_dne[s]=db
+                # dbs_dne[s]=db
+                
         else: 
             symbols_exist.append(s)
-            dbs_exist[s]=db                  
+            # dbs_exist[s]=db      
+            #             
+        db.close_connection()
+        del db
 
-    return symbols_exist, dbs_exist, symbols_dne, dbs_dne
+    if len(startTimes_dict)==0:
+        startTimes_dict=None
+
+    return symbols_exist, startTimes_dict, symbols_dne
 
 def prepare_for_candle_fetch(
     dir_, 

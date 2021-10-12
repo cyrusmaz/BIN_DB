@@ -55,7 +55,7 @@ class symbols_db():
        
     def create_candle_table(self):
         create_table = f'''CREATE TABLE IF NOT EXISTS SYMBOLS_TABLE
-                           (all_symbols TEXT, added TEXT, subtracted TEXT, spot_updated TEXT, usd_futs_updated TEXT, coin_futs_updated TEXT, raw_dump TEXT, insert_timestamp TEXT, insert_timestamp_string TEXT)'''
+                           (all_symbols TEXT, added TEXT, subtracted TEXT, spot_updated TEXT, usd_futs_updated TEXT, coin_futs_updated TEXT, coin_futs_details_updated TEXT, raw_dump TEXT, insert_timestamp TEXT, insert_timestamp_string TEXT)'''
         self.cur.execute(create_table)
         self.con.commit()
 
@@ -92,7 +92,7 @@ class symbols_db():
         insert_list.append(inserted_at_string)
 
         # INSERT AND COMMIT
-        self.cur.executemany(f'INSERT INTO SYMBOLS_TABLE VALUES (?,?,?,?,?,?,?,?,?)', [insert_list])
+        self.cur.executemany(f'INSERT INTO SYMBOLS_TABLE VALUES (?,?,?,?,?,?,?,?,?,?)', [insert_list])
         self.con.commit()
         # print(f"SYMBOLS_TABLE ({self.symbol}) - {len(insert_list)} entries ({insert_list[0][2]} to {insert_list[-1][2]}) - inserted at {inserted_at}")
 
@@ -119,11 +119,18 @@ class symbols_db():
         added_coin_futs = list(set(new_symbols_dict['coin_futs']).difference(set(last_insert['coin_futs'])))
         subtracted_coin_futs = list(set(last_insert['coin_futs']).difference(set(new_symbols_dict['coin_futs'])))
 
+        # added_coin_futs_details = list(set(new_symbols_dict['coin_futs_details'].values()).difference(set(last_insert['coin_futs_details'].values())))
+        # subtracted_coin_futs_details = list(set(last_insert['coin_futs_details'].values()).difference(set(new_symbols_dict['coin_futs_details'].values()))) 
+
+        added_coin_futs_details = list(filter(lambda x: x not in list(last_insert['coin_futs_details'].values()), list(new_symbols_dict['coin_futs_details'].values()))) if 'coin_futs_details' in last_insert.keys() else list(new_symbols_dict['coin_futs_details'].values())
+        subtracted_coin_futs_details = list(filter(lambda x: x not in list(new_symbols_dict['coin_futs_details'].values()), list(last_insert['coin_futs_details'].values()))) if 'coin_futs_details' in last_insert.keys() else []
+
         coin_futs_updated = True if len(added_coin_futs)+len(subtracted_coin_futs)>0 else False
         usd_futs_updated = True if len(added_usd_futs)+len(subtracted_usd_futs)>0 else False
         spot_updated = True if len(added_spot)+len(subtracted_spot)>0 else False
+        coin_futs_details_updated = True if len(added_coin_futs_details)+len(subtracted_coin_futs_details)>0 else False
 
-        if sum([coin_futs_updated, usd_futs_updated, spot_updated])>0:
+        if sum([coin_futs_updated, usd_futs_updated, spot_updated, coin_futs_details_updated])>0:
             print(f"added_spot={added_spot}")
             print(f"subtracted_spot={subtracted_spot}")
             
@@ -133,13 +140,17 @@ class symbols_db():
             print(f"added_coin_futs={added_coin_futs}")
             print(f"subtracted_coin_futs={subtracted_coin_futs}")
 
+            print(f"added_coin_futs_details={added_coin_futs_details}")
+            print(f"subtracted_coin_futs_details={subtracted_coin_futs_details}")            
+
             new_insert_object = [
                 new_symbols_dict, 
-                dict(spot=added_spot,usd_futs=added_usd_futs, coin_futs=added_coin_futs), 
-                dict(spot=subtracted_spot,usd_futs=subtracted_usd_futs, coin_futs=subtracted_coin_futs),
+                dict(spot=added_spot,usd_futs=added_usd_futs, coin_futs=added_coin_futs, coin_futs_details=added_coin_futs_details), 
+                dict(spot=subtracted_spot,usd_futs=subtracted_usd_futs, coin_futs=subtracted_coin_futs, coin_futs_details=subtracted_coin_futs_details),
                 spot_updated,
                 usd_futs_updated,
                 coin_futs_updated,
+                coin_futs_details_updated,
                 exchange_infos_dict]
 
             self.insert_multiple(new_insert_object)

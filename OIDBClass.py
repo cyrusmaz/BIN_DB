@@ -34,6 +34,7 @@ class oi_db():
 
 
     def get_last(self):
+        print(f'OIDBClass.get_last() {self.symbol}, {self.type}, {self.interval}, {self.exchange}')
         row = self.query(f"SELECT oi FROM OI_TABLE WHERE oi_time=(SELECT last_oi_time FROM LAST_INSERT_VIEW)") 
         if len(row)>1:
             print(f'OIDBClass.get_last - {self.symbol}: {len(row)} MATCHING ENTRIES - SOMETHING IS WRONG? SHOULD BE JUST ONE')
@@ -120,7 +121,7 @@ class oi_db():
         # INSERT AND COMMIT
         self.cur.executemany(f'INSERT INTO OI_TABLE VALUES (?,?,?,?,?,?,?)', insert_list)
         self.con.commit()
-        print(f"OI_TABLE ({self.symbol}) - {len(insert_list)} entries ({insert_list[0][2]} to {insert_list[-1][2]}) - inserted at {inserted_at}")
+        print(f"OI_TABLE ({self.symbol} {self.type}) - {len(insert_list)} entries ({insert_list[0][2]} to {insert_list[-1][2]}) - inserted at {inserted_at}")
 
     def query(self, query):
         self.cur.execute(query)
@@ -130,6 +131,9 @@ class oi_db():
     def execute(self, query):
         self.cur.execute(query)
         self.con.commit()
+
+    def close_connection(self):
+        self.con.close()
 
 
 

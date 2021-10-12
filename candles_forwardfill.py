@@ -8,6 +8,7 @@ import time
 from db_helpers import *
 # from API_RATES import *
 from async_fns import get_candles
+import datetime
 
 
 
@@ -101,7 +102,7 @@ def candles_forwardfill_fn(symbols, interval, usd_futs, coin_futs, mark, index, 
         if current_minute_weight + len(symbols) >= rate_limit:
             sleep_time = 61 - (datetime.datetime.now()-start_time).total_seconds()
             sleep_time = max(sleep_time, 30)
-            print('sleeping for {} seconds'.format(sleep_time))
+            print(f'{datetime.datetime.now()} - sleeping for {sleep_time} seconds')
             print(f'symbols remaining: {len(symbols)}')
             time.sleep(sleep_time)
             current_minute_weight = 0

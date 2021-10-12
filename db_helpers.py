@@ -9,20 +9,62 @@ import os
 import json
 
 
-def get_directories_from_param_path(param_path):
-    with open(param_path,'r') as f: 
-        db_parameters= json.load(f)
+def get_directories_from_param_path(param_path=None, db_parameters=None):
+    """BUILD ALL THE PATHS FOR DB DIRECTORIES"""
 
-    symbols_dir = db_parameters['DB_DIRECTORY_SYMBOLS']
-    usd_futs_candles_dir = db_parameters['DB_DIRECTORY_CANDLES']+'USD_FUTS/'
-    spot_candles_dir = db_parameters['DB_DIRECTORY_CANDLES']+'SPOT/'
-    # extract oi and fundiing directories
-    usd_futs_oi_dir = db_parameters['DB_DIRECTORY_OI']
-    usd_futs_funding_dir =  db_parameters['DB_DIRECTORY_FUNDING']
+    if db_parameters is None and param_path is not None: 
+        with open(param_path,'r') as f: 
+            db_parameters= json.load(f)
+
+    db_dir = db_parameters['DB_DIRECTORY']
+    candles_dir = db_dir+'CANDLES/'
+
+    usd_futs_candles_dir = candles_dir+'USD_FUTS/'
+    usd_futs_index_candles_dir = candles_dir+'USD_FUTS_INDEX/'
+    usd_futs_mark_candles_dir = candles_dir+'USD_FUTS_MARK/'
+
+    coin_futs_candles_dir = candles_dir+'COIN_FUTS/'
+    coin_futs_index_candles_dir = candles_dir+'COIN_FUTS_INDEX/'
+    coin_futs_mark_candles_dir = candles_dir+'COIN_FUTS_MARK/'
+
+    spot_candles_dir = candles_dir+'SPOT/'
+
+    # build the oi directory paths 
+    oi_dir = db_dir+'OI/'
+    usd_futs_oi_dir = oi_dir+'USD_FUTS/'
+    coin_futs_oi_dir = oi_dir+'COIN_FUTS/'
+
+    # build the funding directory paths
+    funding_dir = db_dir+'FUNDING/'
+    usd_futs_funding_dir =  oi_dir+'FUNDING/USD_FUTS/'
+    coin_futs_funding_dir =  oi_dir+'FUNDING/COIN_FUTS/'
+
+    # build the symbols directory path
+    symbols_dir = db_dir+'SYMBOLS/'
     # extract exchange and exchange_types 
     exchange=db_parameters['EXCHANGE']
-    # exchange_types = db_parameters['EXCHANG_TYPES']
-    return symbols_dir, usd_futs_candles_dir, spot_candles_dir, usd_futs_oi_dir, usd_futs_funding_dir, exchange
+
+    output = dict(
+        usd_futs_candles_dir = usd_futs_candles_dir,
+        usd_futs_index_candles_dir = usd_futs_index_candles_dir,
+        usd_futs_mark_candles_dir = usd_futs_mark_candles_dir,
+        coin_futs_candles_dir = coin_futs_candles_dir,
+        coin_futs_index_candles_di = coin_futs_index_candles_dir,
+        coin_futs_mark_candles_dir = coin_futs_mark_candles_dir,
+        spot_candles_dir= spot_candles_dir,
+        oi_dir = oi_dir,
+        usd_futs_oi_dir = usd_futs_oi_dir,
+        coin_futs_oi_dir = coin_futs_oi_dir,
+        funding_dir = funding_dir,
+        usd_futs_funding_dir = usd_futs_funding_dir,
+        coin_futs_funding_dir = coin_futs_funding_dir,
+        symbols_dir = symbols_dir,
+        exchange = exchange)
+
+    return output
+
+
+
 
 def batch_symbols_fn(symbols, batch_size):
     """produce an iterato symbols. batch_size has to be <= rate limit"""
@@ -62,6 +104,8 @@ def get_symbols(exchange_infos, logger):
 
     result['spot']=spot_trading_symbols
     result['usd_futs']=usd_futs_trading_symbols
+    
+    result['coin_futs_details']={d['symbol']:dict(pair=d['pair'], contractType=d['contractType']) for d in exchange_infos['coin_futs']['symbols']}
 
     return result 
 

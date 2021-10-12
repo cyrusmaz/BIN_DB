@@ -1,10 +1,11 @@
 from db_helpers import *
-from API_RATES import *
+# from API_RATES import *
 from async_fns import get_futs_stats
 
 import asyncio
 import time
 from copy import deepcopy
+import datetime
 
 
 
@@ -12,7 +13,8 @@ from copy import deepcopy
 
 
 
-def funding_forwardfill_fn(symbols, dbs=None, startTimes=None, logger=None, memory_efficient=True):
+
+def funding_forwardfill_fn(symbols,usd_futs, coin_futs, limit, rate_limit, dbs=None, startTimes=None, logger=None, memory_efficient=True):
     """ 
         if startTimes is None then start at the beginning and go forward until new requests have length 1
         if startTimes is not None then start at startTimes and go forward until new requests have length 1
@@ -20,8 +22,8 @@ def funding_forwardfill_fn(symbols, dbs=None, startTimes=None, logger=None, memo
         dbs is dict(symbol:FundingDBClass, ... )
         
     """
-    limit = FUTS_FUNDING_LIMIT   
-    rate_limit = FUTS_FUNDING_RATE_LIMIT   
+    # limit = FUTS_FUNDING_LIMIT   
+    # rate_limit = FUTS_FUNDING_RATE_LIMIT   
 
     # symbols = deepcopy(symbols)
     if symbols is None or len(symbols)==0:
@@ -54,7 +56,7 @@ def funding_forwardfill_fn(symbols, dbs=None, startTimes=None, logger=None, memo
     if startTimes is None: startTimes=[1]*len(symbols)
     if dbs is not None: startTimes = [dbs[s].get_last()['fundingTime'] for s in symbols]
 
-    data = asyncio.run(get_futs_stats(**dict(symbols=symbols, stat='funding', limit=limit, startTimes=startTimes,  endTimes=None, logger=logger)))
+    data = asyncio.run(get_futs_stats(**dict(symbols=symbols, stat='funding', limit=limit, usd_futs=usd_futs, coin_futs=coin_futs, startTimes=startTimes,  endTimes=None, logger=logger)))
     new_data = deepcopy(data)
     total_requests_per_symbol += 1
     current_minute_weight += len(symbols)
@@ -82,6 +84,7 @@ def funding_forwardfill_fn(symbols, dbs=None, startTimes=None, logger=None, memo
                         reason='filling into present - zero results',
                         # interval=interval,
                         # futs=futs,
+                        usd_futs=usd_futs, coin_futs=coin_futs,
                         num_dropped_symbols=len(pops),
                         dropped_symbols=pops,
                         )))  
@@ -109,7 +112,7 @@ def funding_forwardfill_fn(symbols, dbs=None, startTimes=None, logger=None, memo
         if current_minute_weight + len(symbols) >= rate_limit:
             sleep_time = 61 - (datetime.datetime.now()-start_time).total_seconds()
             sleep_time = max(sleep_time, 30)
-            print('sleeping for {} seconds'.format(sleep_time))
+            print(f'{datetime.datetime.now()} - sleeping for {sleep_time} seconds')
             print(f'symbols remaining: {len(symbols)}')
             time.sleep(sleep_time)
             current_minute_weight = 0
@@ -136,6 +139,7 @@ def funding_forwardfill_fn(symbols, dbs=None, startTimes=None, logger=None, memo
                                 reason='reached present time',
                                 # interval=interval,
                                 # futs=futs,
+                                usd_futs=usd_futs, coin_futs=coin_futs,
                                 num_dropped_symbols=len(pops),
                                 dropped_symbols=pops,
                                 )))  
@@ -157,7 +161,7 @@ def funding_forwardfill_fn(symbols, dbs=None, startTimes=None, logger=None, memo
         # total_requests_per_symbol += 1
         # current_minute_weight += len(symbols)
 
-        new_data = asyncio.run(get_futs_stats(**dict(symbols=symbols,stat='funding',  limit=limit, startTimes=startTimes, logger=logger)))
+        new_data = asyncio.run(get_futs_stats(**dict(symbols=symbols,stat='funding',usd_futs=usd_futs, coin_futs=coin_futs,  limit=limit, startTimes=startTimes, logger=logger)))
         total_requests_per_symbol += 1
         current_minute_weight += len(symbols)        
 
@@ -188,7 +192,7 @@ def funding_forwardfill_fn(symbols, dbs=None, startTimes=None, logger=None, memo
     for k,v in data.items():
         # print(f'(funding_forwardfill_fn) {k}, last entry: {long_to_datetime_str(last_insert_print[k])}')
         # print(f'funding_forwardfill_fn:{k} inserted:{len(v)} last entry:{long_to_datetime_str(last_insert_print[k])}') 
-        print(f'funding_forwardfill_fn:{k} inserted:{len(v)} last:{long_to_datetime_str(last_insert_print[k])}')            
+        print(f'funding_forwardfill_fn:{k} usd_futs={usd_futs}, coin_futs={coin_futs}, inserted:{len(v)} last:{long_to_datetime_str(last_insert_print[k])}')            
     return data
 
 
@@ -196,113 +200,113 @@ def funding_forwardfill_fn(symbols, dbs=None, startTimes=None, logger=None, memo
 
 
 
-def funding_forwardfill_fn_OG(symbols, dbs=None, startTimes=None, logger=None):
-    """ 
-        if startTimes is None then start at the beginning and go forward until new requests have length 1
-        if startTimes is not None then start at startTimes and go forward until new requests have length 1
+# def funding_forwardfill_fn_OG(symbols, dbs=None, startTimes=None, logger=None):
+#     """ 
+#         if startTimes is None then start at the beginning and go forward until new requests have length 1
+#         if startTimes is not None then start at startTimes and go forward until new requests have length 1
         
-        dbs is dict(symbol:FundingDBClass, ... )
+#         dbs is dict(symbol:FundingDBClass, ... )
         
-    """
+#     """
 
-    limit = FUTS_FUNDING_LIMIT   
-    rate_limit = FUTS_FUNDING_RATE_LIMIT   
+#     limit = FUTS_FUNDING_LIMIT   
+#     rate_limit = FUTS_FUNDING_RATE_LIMIT   
 
-    symbols = deepcopy(symbols)
-    if symbols is None or len(symbols)==0:
-        return None
+#     symbols = deepcopy(symbols)
+#     if symbols is None or len(symbols)==0:
+#         return None
         
-    j=0
+#     j=0
 
-    start_time = datetime.datetime.now()
-    current_minute_weight = 0
-    total_requests_per_symbol =0 
+#     start_time = datetime.datetime.now()
+#     current_minute_weight = 0
+#     total_requests_per_symbol =0 
 
-    if startTimes is None: startTimes=[1]*len(symbols)
-    if dbs is not None: startTimes = [dbs[s].get_last()['fundingTime'] for s in symbols]
+#     if startTimes is None: startTimes=[1]*len(symbols)
+#     if dbs is not None: startTimes = [dbs[s].get_last()['fundingTime'] for s in symbols]
 
-    data = asyncio.run(get_futs_stats(**dict(symbols=symbols, stat='funding', limit=limit, startTimes=startTimes,  endTimes=None, logger=logger)))
-    new_data = deepcopy(data)
+#     data = asyncio.run(get_futs_stats(**dict(symbols=symbols, stat='funding', limit=limit, startTimes=startTimes,  endTimes=None, logger=logger)))
+#     new_data = deepcopy(data)
 
-    for symbol in symbols:
-        if dbs is not None: 
-            dbs[symbol].delete_last()   
-            dbs[symbol].insert_multiple(new_data[symbol])
+#     for symbol in symbols:
+#         if dbs is not None: 
+#             dbs[symbol].delete_last()   
+#             dbs[symbol].insert_multiple(new_data[symbol])
 
-    total_requests_per_symbol += 1
-    current_minute_weight += len(symbols)
-    j+=1
-    print(symbols)
-    print('j={}'.format(j))
-    print('current_minute_weight: {}'.format(current_minute_weight))
-    print('total_requests_per_symbol: {}'.format(total_requests_per_symbol))    
-    startTimes_prev = None
+#     total_requests_per_symbol += 1
+#     current_minute_weight += len(symbols)
+#     j+=1
+#     print(symbols)
+#     print('j={}'.format(j))
+#     print('current_minute_weight: {}'.format(current_minute_weight))
+#     print('total_requests_per_symbol: {}'.format(total_requests_per_symbol))    
+#     startTimes_prev = None
 
-    while True:
-        start_time = datetime.datetime.now()
-        if current_minute_weight + len(symbols) >= rate_limit:
-            sleep_time = 61 - (datetime.datetime.now()-start_time).total_seconds()
-            sleep_time = max(sleep_time, 30)
-            print('funding_forwardfill_fn sleeping for {} seconds'.format(sleep_time))
-            print(f'symbols remaining: {len(symbols)}')
-            time.sleep(sleep_time)
-            current_minute_weight = 0
-            start_time = datetime.datetime.now()
+#     while True:
+#         start_time = datetime.datetime.now()
+#         if current_minute_weight + len(symbols) >= rate_limit:
+#             sleep_time = 61 - (datetime.datetime.now()-start_time).total_seconds()
+#             sleep_time = max(sleep_time, 30)
+#             print('funding_forwardfill_fn sleeping for {} seconds'.format(sleep_time))
+#             print(f'symbols remaining: {len(symbols)}')
+#             time.sleep(sleep_time)
+#             current_minute_weight = 0
+#             start_time = datetime.datetime.now()
 
-        startTimes=[data[symbol][-1]['fundingTime'] for symbol in symbols]
-        print('START TIMES')
-        print(startTimes)
+#         startTimes=[data[symbol][-1]['fundingTime'] for symbol in symbols]
+#         print('START TIMES')
+#         print(startTimes)
 
-        if startTimes_prev is None: 
-            startTimes_prev = startTimes
+#         if startTimes_prev is None: 
+#             startTimes_prev = startTimes
 
-        elif len(startTimes_prev)>0:
-            pops = []
-            for s in range(len(symbols)):
-                if len(new_data[symbols[s]])==1:
-                    pops.append(symbols[s])
+#         elif len(startTimes_prev)>0:
+#             pops = []
+#             for s in range(len(symbols)):
+#                 if len(new_data[symbols[s]])==1:
+#                     pops.append(symbols[s])
 
-            if len(pops)>0: 
-                for s in pops: 
-                    print(f'REACHED END OF: {s}')
-                    startTimes_prev.pop(symbols.index(s))
-                    startTimes.pop(symbols.index(s))
-                    symbols.pop(symbols.index(s))
+#             if len(pops)>0: 
+#                 for s in pops: 
+#                     print(f'REACHED END OF: {s}')
+#                     startTimes_prev.pop(symbols.index(s))
+#                     startTimes.pop(symbols.index(s))
+#                     symbols.pop(symbols.index(s))
 
-        if len(symbols)==0:
-            break
+#         if len(symbols)==0:
+#             break
 
-        for e in startTimes:
-            print(long_to_datetime_str(e))
-            print(e)            
+#         for e in startTimes:
+#             print(long_to_datetime_str(e))
+#             print(e)            
 
-        new_data = asyncio.run(get_futs_stats(**dict(symbols=symbols,stat='funding',  limit=limit, startTimes=startTimes, logger=logger)))
-        total_requests_per_symbol += 1
-        current_minute_weight += len(symbols)
+#         new_data = asyncio.run(get_futs_stats(**dict(symbols=symbols,stat='funding',  limit=limit, startTimes=startTimes, logger=logger)))
+#         total_requests_per_symbol += 1
+#         current_minute_weight += len(symbols)
 
-        print(symbols)
-        j+=1
-        print('j={}'.format(j))
-        print('current_minute_weight: {}'.format(current_minute_weight))
-        print('total_requests_per_symbol: {}'.format(total_requests_per_symbol))    
+#         print(symbols)
+#         j+=1
+#         print('j={}'.format(j))
+#         print('current_minute_weight: {}'.format(current_minute_weight))
+#         print('total_requests_per_symbol: {}'.format(total_requests_per_symbol))    
 
-        for symbol in symbols:
-            if dbs is not None: 
-                print('now inserting new pull')
-                # if 
-                dbs[symbol].insert_multiple(new_data[symbol][1:])
+#         for symbol in symbols:
+#             if dbs is not None: 
+#                 print('now inserting new pull')
+#                 # if 
+#                 dbs[symbol].insert_multiple(new_data[symbol][1:])
 
-                data[symbol]=new_data[symbol]
-            else:
-                data[symbol]=data[symbol][:-1]+new_data[symbol]
+#                 data[symbol]=new_data[symbol]
+#             else:
+#                 data[symbol]=data[symbol][:-1]+new_data[symbol]
             
 
-        startTimes_prev=startTimes
+#         startTimes_prev=startTimes
 
-    for k,v in data.items():
-        print(f'{k}: {len(v)} funding rates')
+#     for k,v in data.items():
+#         print(f'{k}: {len(v)} funding rates')
 
-    return data
+#     return data
 
 
 

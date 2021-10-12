@@ -6,6 +6,7 @@ import asyncio
 import time
 # from copy import deepcopy
 from math import ceil
+import datetime
 
 def candles_backfill_fn(symbols,  interval, backfill, usd_futs, coin_futs, mark,limit, rate_limit, index, dbs=None, logger=None, memory_efficient=True):
     """ for backfilling candles start at present and go backward 
@@ -109,7 +110,7 @@ def candles_backfill_fn(symbols,  interval, backfill, usd_futs, coin_futs, mark,
         if current_minute_weight + len(symbols) >= rate_limit:
             sleep_time = 61 - (datetime.datetime.now()-start_time).total_seconds()
             sleep_time = max(sleep_time, 30)
-            print('sleeping for {} seconds'.format(sleep_time))
+            print(f'{datetime.datetime.now()} - sleeping for {sleep_time} seconds')
             print(f'symbols remaining: {len(symbols)}')
             time.sleep(sleep_time)
             current_minute_weight = 0

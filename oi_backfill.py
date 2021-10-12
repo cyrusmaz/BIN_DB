@@ -1,18 +1,19 @@
 from db_helpers import *
-from API_RATES import *
+# from API_RATES import *
 from async_fns import get_futs_stats
 
 import asyncio
 import time
-from copy import deepcopy
+import datetime
 from math import ceil
 
-def oi_backfill_fn(symbols, dbs=None, interval='1m', backfill=8, futs=False, logger=None, memory_efficient=True):
+def oi_backfill_fn(symbols, interval, backfill, usd_futs, coin_futs,limit,rate_limit, dbs=None,logger=None, memory_efficient=True,
+            coin_futs_details=None):
     """ for backfilling OI, start at present and go backward 
         until either backfill is reached or no new data comes in on each subsequent request"""
 
-    limit = FUTS_OI_LIMIT  
-    rate_limit = FUTS_OI_RATE_LIMIT
+    # limit = FUTS_OI_LIMIT  
+    # rate_limit = FUTS_OI_RATE_LIMIT
 
 
     # symbols = deepcopy(symbols)
@@ -45,7 +46,12 @@ def oi_backfill_fn(symbols, dbs=None, interval='1m', backfill=8, futs=False, log
     if len(endTimes_prev)==0:
         endTimes_prev=None
 
-    data = asyncio.run(get_futs_stats(**dict(symbols=symbols, stat='oi', period=interval, limit=limit, endTimes=endTimes_prev, logger=logger)))
+    data = asyncio.run(
+        get_futs_stats(**dict(symbols=symbols, stat='oi', 
+        period=interval, limit=limit,
+        usd_futs=usd_futs, coin_futs=coin_futs, 
+        endTimes=endTimes_prev, logger=logger,
+        coin_futs_details=coin_futs_details)))
     current_minute_weight += len(symbols)
     total_requests_per_symbol += 1
     j+=1
@@ -58,6 +64,7 @@ def oi_backfill_fn(symbols, dbs=None, interval='1m', backfill=8, futs=False, log
                 # print(data[symbols[s]])
                 if len(endTimes_prev)>0 and data[symbols[s]][0]['timestamp']!=endTimes_prev[s]:
                     dbs[symbols[s]].insert_multiple(data[symbols[s]])
+            
 
     pops = list(filter(lambda x: len(data[symbols[x]])==0, range(len(symbols))))
     pops = [symbols[p] for p in pops]
@@ -71,6 +78,7 @@ def oi_backfill_fn(symbols, dbs=None, interval='1m', backfill=8, futs=False, log
                         reason='backfilling from inception - zero results',
                         interval=interval,
                         # futs=futs,
+                        usd_futs=usd_futs, coin_futs=coin_futs,
                         num_dropped_symbols=len(pops),
                         dropped_symbols=pops,
                         )))  
@@ -99,7 +107,7 @@ def oi_backfill_fn(symbols, dbs=None, interval='1m', backfill=8, futs=False, log
         if current_minute_weight + len(symbols) >= rate_limit:
             sleep_time = 61 - (datetime.datetime.now()-start_time).total_seconds()
             sleep_time = max(sleep_time, 30)
-            print('sleeping for {} seconds'.format(sleep_time))
+            print(f'{datetime.datetime.now()} - sleeping for {sleep_time} seconds')
             print(f'symbols remaining: {len(symbols)}')
             time.sleep(sleep_time)
             current_minute_weight = 0
@@ -126,6 +134,7 @@ def oi_backfill_fn(symbols, dbs=None, interval='1m', backfill=8, futs=False, log
                             payload=dict(
                                 reason='reached inception time',
                                 interval=interval,
+                                usd_futs=usd_futs, coin_futs=coin_futs,
                                 # futs=futs,
                                 num_dropped_symbols=len(pops),
                                 dropped_symbols=pops,
@@ -144,7 +153,13 @@ def oi_backfill_fn(symbols, dbs=None, interval='1m', backfill=8, futs=False, log
         if len(symbols)==0:
             break
 
-        new_data = asyncio.run(get_futs_stats(**dict(symbols=symbols, stat='oi', period=interval, limit=limit, endTimes=endTimes, logger=logger)))
+        new_data = asyncio.run(
+            get_futs_stats(**dict(
+                symbols=symbols, stat='oi',
+                usd_futs=usd_futs, coin_futs=coin_futs, 
+                period=interval, limit=limit, 
+                endTimes=endTimes, logger=logger,
+                coin_futs_details=coin_futs_details)))
 
         total_requests_per_symbol += 1
         current_minute_weight += len(symbols)
@@ -176,7 +191,7 @@ def oi_backfill_fn(symbols, dbs=None, interval='1m', backfill=8, futs=False, log
     for k,v in data.items():
         # print(f'(oi_backfill_fn) {k} inserted {len(v)} last entry: {long_to_datetime_str(last_insert_print[symbol])}')
 
-        print(f'oi_backfill_fn:{k} interval:{interval} inserted:{len(v)} last entry:{long_to_datetime_str(last_insert_print[k])}')   
+        print(f'oi_backfill_fn:{k} interval:{interval} usd_futs={usd_futs} coin_futs={coin_futs} inserted:{len(v)} last entry:{long_to_datetime_str(last_insert_print[k])}')   
         
     return data
 

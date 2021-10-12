@@ -26,6 +26,7 @@ async def get_candles_worker(symbol, interval, limit, startTime=None, endTime=No
             klines_endpoint = 'https://dapi.binance.com/dapi/v1/markPriceKlines?symbol={}&interval={}&limit={}'        
 
     url = klines_endpoint.format(symbol, interval, limit)
+    # print(url)
     if startTime is not None: 
         url = url + '&startTime={}'.format(startTime)
     if endTime is not None: 
@@ -104,8 +105,8 @@ async def get_candles(symbols, interval='1m',limit=1000, startTimes=None, endTim
     return output
 
 # FUNDING AND OI
-async def get_futs_stat_worker(symbol, stat=None, period=None, limit=500, usd_futs=False, coin_futs=False, startTime=None, endTime=None, logger=None, **kwargs):
-    print(f'async get_futs_stat_worker({symbol}, stat={stat},period={period}, limit={limit},usd_futs={usd_futs}, coin_fut{coin_futs}, startTime={long_to_datetime_str(startTime)}, endTime={long_to_datetime_str(endTime)})')
+async def get_futs_stat_worker(symbol, stat=None, period=None, limit=500, usd_futs=False, coin_futs=False, startTime=None, endTime=None, logger=None, coin_futs_details=None, **kwargs):
+    print(f'async get_futs_stat_worker({symbol}, stat={stat},period={period}, limit={limit},usd_futs={usd_futs}, coin_futs={coin_futs}, startTime={long_to_datetime_str(startTime)}, endTime={long_to_datetime_str(endTime)})')
     if usd_futs:
         if stat == 'funding':
             endpoint = "https://fapi.binance.com/fapi/v1/fundingRate?symbol={}&limit={}"
@@ -118,9 +119,8 @@ async def get_futs_stat_worker(symbol, stat=None, period=None, limit=500, usd_fu
             endpoint = "https://dapi.binance.com/dapi/v1/fundingRate?symbol={}&limit={}"
             url = endpoint.format(symbol, limit)
         elif stat == 'oi':
-            endpoint = "https://dapi.binance.com/futures/data/openInterestHist?symbol={}&period={}&limit={}"
-            url = endpoint.format(symbol, period,limit)
-
+            endpoint = "https://dapi.binance.com/futures/data/openInterestHist?pair={}&contractType={}&period={}&limit={}"
+            url = endpoint.format(coin_futs_details['pair'],coin_futs_details['contractType'], period,limit)
 
     if startTime is not None: 
         url = url + '&startTime={}'.format(startTime)
@@ -131,6 +131,7 @@ async def get_futs_stat_worker(symbol, stat=None, period=None, limit=500, usd_fu
         # print(url)
         async with aiohttp.ClientSession(json_serialize=json.dumps) as session:
             async with session.get(url) as resp:
+                # print(url)
                 resp = await resp.json(loads=json.loads)
                 output[symbol]=resp
         return output
@@ -140,13 +141,24 @@ async def get_futs_stat_worker(symbol, stat=None, period=None, limit=500, usd_fu
         raise e
 
 
-async def get_futs_stats(symbols, stat, limit, period='5m',usd_futs=False, coin_futs=False, startTimes=None, endTimes=None, logger=None, **kwargs):
+async def get_futs_stats(
+    symbols, stat, limit, 
+    period='5m',usd_futs=False, coin_futs=False, 
+    startTimes=None, endTimes=None, 
+    logger=None, coin_futs_details=None,**kwargs):
+
     if endTimes is None:
         endTimes=[None]*len(symbols)
     if startTimes is None:
         startTimes=[None]*len(symbols)        
     try:
-        result = await asyncio.gather(*[get_futs_stat_worker(symbol=symbol, stat=stat, period=period,limit=limit, usd_futs=usd_futs, coin_futs=coin_futs, startTime=startTime, endTime=endTime) for symbol, startTime,endTime in zip(symbols,startTimes,endTimes)])
+        result = await asyncio.gather(*[
+            get_futs_stat_worker(
+                symbol=symbol, stat=stat, 
+                period=period,limit=limit, 
+                usd_futs=usd_futs, coin_futs=coin_futs, 
+                startTime=startTime, endTime=endTime,
+                coin_futs_details=coin_futs_details[symbol] if coin_futs_details is not None else None) for symbol, startTime,endTime in zip(symbols,startTimes,endTimes)])
     except Exception as e:
         logger.critical(dict(origin='get_futs_stats', payload=e))
         raise e
