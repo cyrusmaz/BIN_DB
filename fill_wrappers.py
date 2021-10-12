@@ -1,22 +1,21 @@
-from candles_backfill import candles_backfill_fn
-from candles_forwardfill import candles_forwardfill_fn
+# from candles_backfill import candles_backfill_fn
+# from candles_forwardfill import candles_forwardfill_fn
+# from oi_backfill import oi_backfill_fn
+# from oi_forwardfill import oi_forwardfill_fn
 
-from oi_backfill import oi_backfill_fn
-from oi_forwardfill import oi_forwardfill_fn
+from fill_candles_fns import candles_backfill_fn, candles_forwardfill_fn
+from fill_oi_fns import oi_backfill_fn, oi_forwardfill_fn
+from fill_funding_fns import funding_forwardfill_fn
 
-from funding_forwardfill import funding_forwardfill_fn
 
-from CandleDBClass import candle_db
-from OIDBClass import oi_db
-from FundingDBClass import funding_db
-
+from DB_class_candles import candle_db
+from DB_class_oi import oi_db
+from DB_class_funding import funding_db
 
 from db_helpers import batch_symbols_fn
 import aiohttp
 import time
 import datetime
-
-
 
 def candle_fill_wrapper(
     symbols, 
@@ -49,16 +48,8 @@ def candle_fill_wrapper(
     for batch_symbols in batch_symbols_fn(symbols=symbols, batch_size=batch_size):
         j+=1
 
-
         dbs={}
-        # batch_symbols=list(filter(lambda x: x!='BNBBTC', batch_symbols))
         for s in batch_symbols:
-            # if not mark and not index:
-            #     db_name=f'{s}_{interval}_candle.db'
-            # elif usd_futs and mark and not index:
-            #     db_name=f'{s}_{interval}_mark.db'
-            # elif usd_futs and not mark and index:
-            #     db_name=f'{s}_{interval}_index.db'
             if not usd_futs and not coin_futs and not mark and not index:
                 db_name=f'{s}_{interval}_spot_candles.db'
 
@@ -78,13 +69,8 @@ def candle_fill_wrapper(
                 elif not mark and index:
                     db_name=f'{s}_{interval}_coinf_index.db'                 
 
-
-            
             db_dir = f'{dir_}{interval}/'     
             dbs[s]=candle_db(DB_DIRECTORY=db_dir, DB_NAME=db_name, INTERVAL=interval, SYMBOL=s, **db_args_dict)   
-
-
-
 
         try: 
             if forward is True: 
@@ -175,8 +161,6 @@ def funding_fill_wrapper(symbols, dbs, batch_size, usd_futs, coin_futs, limit, r
         time.sleep(60)
     print(f'funding_fill_wrapper() complete')
 
-
-
 def oi_fill_wrapper(
     symbols, 
     # dbs, 
@@ -260,8 +244,6 @@ def oi_fill_wrapper(
 
     print(f'oi_fill_wrapper() complete')
 
-
-
 def prepare_for_funding_fetch(
     dir_, 
     symbols, 
@@ -277,7 +259,6 @@ def prepare_for_funding_fetch(
         # dbs_funding[s]=funding_db(SYMBOL=s, DB_DIRECTORY=dir_, DB_NAME=db_name, TYPE='funding', EXCHANGE=EXCHANGE)
         dbs_funding[s]=funding_db(SYMBOL=s, DB_DIRECTORY=dir_, DB_NAME=db_name, **db_args_dict)
     return symbols, dbs_funding 
-
 
 def prepare_for_oi_fetch(
     dir_, 
@@ -311,15 +292,10 @@ def prepare_for_oi_fetch(
                 startTime = last_insert['timestamp']
                 symbols_exist.append(s)
                 startTimes_dict[s]=startTime
-                # dbs_exist[s]=db
             else:
                 symbols_dne.append(s)
-                # dbs_dne[s]=db
-                
         else: 
-            symbols_exist.append(s)
-            # dbs_exist[s]=db      
-            #             
+            symbols_exist.append(s)          
         db.close_connection()
         del db
 
@@ -346,7 +322,7 @@ def prepare_for_candle_fetch(
        mark:             usd_futs=True,  mark=True,  index=False
        index:            usd_futs=True,  mark=False, index=True
        """
-        
+
     symbols_exist = []
     symbols_dne = []
     j=0
@@ -384,15 +360,11 @@ def prepare_for_candle_fetch(
             if last_candle is not None: 
                 symbols_exist.append(s)
                 startTimes_dict[s]=last_candle[0]
-                # dbs_exist[s]=db
             else:
                 symbols_dne.append(s)
-                # dbs_dne[s]=db
         else: 
-            symbols_exist.append(s)
-            # dbs_exist[s]=db           
+            symbols_exist.append(s)        
 
-        # del db 
         db.close_connection()
         del db
 

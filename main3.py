@@ -2,8 +2,9 @@
 import asyncio 
 
 from db_helpers import *
+from exchange_info_parse_fns import *
 from async_fns import get_infos
-from SymbolsDBClass import symbols_db
+from DB_class_symbols import symbols_db
 
 from fill_wrappers import * 
 import argparse
@@ -189,7 +190,6 @@ if __name__ == "__main__":
     if custom_symbols is not None: 
         custom_symbols = args.custom_symbols 
         print(f'custom symbols: {custom_symbols}')
-
 
     param_path = '/mnt/nvme1n1/DB/BINANCE/params.json' if args.nvme1n1 else '/home/cm/Documents/PY_DEV/DB/BINANCE/params.json'
     # param_path = '/home/cm/Documents/PY_DEV/DB/BINANCE/params.json'

@@ -1,75 +1,145 @@
 from read_from_db_fns import *
+f
 
 param_path='/home/cm/Documents/PY_DEV/DB/BINANCE/params.json'
 
 symbols = read_symbols_from_db(param_path=param_path)
 raw_dump_exchange_infos = read_symbols_from_db(param_path=param_path, raw_dump=True)
+type(raw_dump_exchange_infos)
 raw_dump_exchange_infos.keys()
 
 SYMBOLS = [s['symbol'] for s in raw_dump_exchange_infos['spot']['symbols']]
 
-### FOR usd_futs and coin_futs
-pricePrecision = {item['symbol']:item['pricePrecision'] for item in raw_dump_exchange_infos['usd_futs']['symbols']}
-quantityPrecision = {item['symbol']:item['quantityPrecision'] for item in raw_dump_exchange_infos['usd_futs']['symbols']}
-tickSize = {item['symbol']:item['quantityPrecision'] for item in raw_dump_exchange_infos['usd_futs']['symbols']}
-
-precisions = {item['symbol']:{'pricePrecision':item['pricePrecision'], 'quantityPrecision':item['quantityPrecision'] } for item in raw_dump_exchange_infos['usd_futs']['symbols']}
-
-
-
-precisions = {item['symbol']:{'pricePrecision':item['pricePrecision'], 'quantityPrecision':item['quantityPrecision'] } for item in raw_dump_exchange_infos['spot']['symbols']}
 
 with open('data.json', 'w') as outfile:
     json.dump(raw_dump_exchange_infos['usd_futs']['symbols'][0], outfile, indent=4)
 
-raw_dump_exchange_infos['usd_futs']['symbols'][0]
+raw_dump_exchange_infos['spot']['symbols'][0]
 
-
+symbols['coin_futs_details']
 
 d=raw_dump_exchange_infos['usd_futs']['symbols'][0]
 
-from copy import deepcopy
-def get_symbol_info(exchange_info, filterType, info_name, symbols=None):
-    if symbols is not None: 
-        symbol_infos = list(filter(lambda x: x['symbol'] in symbols, exchange_info['symbols']))
-    else: 
-        symbol_infos = deepcopy(exchange_info['symbols'])
+# from copy import deepcopy
+# def get_symbol_info(exchange_info, filterType, info_name, symbols=None):
+#     """FINDS THE SYMBOLS INFO FROM FILTERS IN EXCHANGEINFO"""
+#     """E.G. USED FOR FINDING TICK SIZE, STEP SIZE"""
+#     if symbols is not None: 
+#         symbol_infos = list(filter(lambda x: x['symbol'] in symbols, exchange_info['symbols']))
+#     else: 
+#         symbol_infos = deepcopy(exchange_info['symbols'])
+#         # symbol_infos = list(filter(lambda x: x['status']=='TRADING', symbol_infos))
 
-    output=dict()
-    for symbol_info in symbol_infos:
-        symbol = symbol_info['symbol']
-        # print(symbol)
-        try: 
-            filter_ = list(filter(lambda x: x['filterType']==filterType, symbol_info['filters']))[0]
-            symbol_param = filter_[info_name]
-            output[symbol]=symbol_param
-        except Exception as e : 
-            print(symbol_info['status'])
-            print(f'{symbol} - {e}')
+#     output=dict()
+#     for symbol_info in symbol_infos:
+#         symbol = symbol_info['symbol']
+#         # print(symbol)
+#         try: 
+#             filter_ = list(filter(lambda x: x['filterType']==filterType, symbol_info['filters']))[0]
+#             symbol_param = float(filter_[info_name])
+            
+#         except Exception as e : 
+#             print(symbol_info['status'])
+#             print(f'{symbol} - {e}')
+#             symbol_param=None
 
-    return output 
+#         output[symbol]=symbol_param
+#     return output 
 
-usd_futs_tick_size = get_symbol_info(
-    exchange_info=raw_dump_exchange_infos['usd_futs'], 
-    filterType='PRICE_FILTER', 
-    parameter_name='tickSize')
 
-spot_tick_size = get_symbol_info(
-    exchange_info=raw_dump_exchange_infos['spot'], 
-    filterType='PRICE_FILTER', 
-    parameter_name='tickSize')
 
-spot_limit_step_size = get_symbol_info(
-    exchange_info=raw_dump_exchange_infos['spot'], 
-    filterType='LOT_SIZE', 
-    parameter_name='stepSize')
 
-spot_market_step_size = get_symbol_info(
-    symbols=['BTCUSDT'],
-    exchange_info=raw_dump_exchange_infos['spot'], 
-    filterType='LOT_SIZE', 
-    parameter_name='stepSize')
+# spot_tick_size = get_symbol_info(
+#     exchange_info=raw_dump_exchange_infos['spot'], 
+#     filterType='PRICE_FILTER', 
+#     info_name='tickSize')
 
+# spot_limit_step_size = get_symbol_info(
+#     exchange_info=raw_dump_exchange_infos['spot'], 
+#     filterType='LOT_SIZE', 
+#     info_name='stepSize')
+
+# spot_limit_max_qty = get_symbol_info(
+#     exchange_info=raw_dump_exchange_infos['spot'], 
+#     filterType='LOT_SIZE', 
+#     info_name='maxQty')    
+
+# spot_limit_min_qty = get_symbol_info(
+#     exchange_info=raw_dump_exchange_infos['spot'], 
+#     filterType='LOT_SIZE', 
+#     info_name='minQty')        
+
+
+
+raw_dump_exchange_infos['coin_futs_details']
+
+######################### USD FUTS
+# TICK SIZE
+usd_futs_tick_size = get_symbol_info(exchange_info=raw_dump_exchange_infos['usd_futs'], filterType='PRICE_FILTER', info_name='tickSize')
+
+# LIMIT STEP SIZE
+usd_futs_limit_step_size = get_symbol_info(exchange_info=raw_dump_exchange_infos['usd_futs'], filterType='LOT_SIZE', info_name='stepSize')
+# LIMIT MAXQTY
+usd_futs_limit_max_qty = get_symbol_info(exchange_info=raw_dump_exchange_infos['usd_futs'], filterType='LOT_SIZE', info_name='maxQty')    
+# LIMIT MINQTY
+usd_futs_limit_min_qty = get_symbol_info(exchange_info=raw_dump_exchange_infos['usd_futs'], filterType='LOT_SIZE', info_name='minQty')        
+
+# MKT STEP SIZE
+usd_futs_market_step_size = get_symbol_info(exchange_info=raw_dump_exchange_infos['usd_futs'], filterType='MARKET_LOT_SIZE', info_name='stepSize')
+# MKT MAXQTY
+usd_futs_market_max_qty = get_symbol_info(exchange_info=raw_dump_exchange_infos['usd_futs'], filterType='MARKET_LOT_SIZE', info_name='maxQty')    
+# MKT MINQTY
+usd_futs_market_min_qty = get_symbol_info(exchange_info=raw_dump_exchange_infos['usd_futs'], filterType='MARKET_LOT_SIZE', info_name='minQty')      
+######################### USD FUTS
+
+######################### COIN FUTS
+coin_futs_tick_size = get_symbol_info(exchange_info=raw_dump_exchange_infos['coin_futs'], filterType='PRICE_FILTER', info_name='tickSize')
+
+# LIMIT STEP SIZE
+coin_futs_limit_step_size = get_symbol_info(exchange_info=raw_dump_exchange_infos['coin_futs'], filterType='LOT_SIZE', info_name='stepSize')
+# LIMIT MAXQTY
+coin_futs_limit_max_qty = get_symbol_info(exchange_info=raw_dump_exchange_infos['coin_futs'], filterType='LOT_SIZE', info_name='maxQty')    
+# LIMIT MINQTY
+coin_futs_limit_min_qty = get_symbol_info(exchange_info=raw_dump_exchange_infos['coin_futs'], filterType='LOT_SIZE', info_name='minQty')        
+
+# MKT STEP SIZE
+coin_futs_market_step_size = get_symbol_info(exchange_info=raw_dump_exchange_infos['coin_futs'], filterType='MARKET_LOT_SIZE', info_name='stepSize')
+# MKT MAXQTY
+coin_futs_market_max_qty = get_symbol_info(exchange_info=raw_dump_exchange_infos['coin_futs'], filterType='MARKET_LOT_SIZE', info_name='maxQty')    
+# MKT MINQTY
+coin_futs_market_min_qty = get_symbol_info(exchange_info=raw_dump_exchange_infos['coin_futs'], filterType='MARKET_LOT_SIZE', info_name='minQty')      
+######################### COIN FUTS
+
+
+######################### SPOT
+spot_tick_size = get_symbol_info(exchange_info=raw_dump_exchange_infos['spot'], filterType='PRICE_FILTER', info_name='tickSize')
+
+# LIMIT STEP SIZE
+spot_limit_step_size = get_symbol_info(exchange_info=raw_dump_exchange_infos['spot'], filterType='LOT_SIZE', info_name='stepSize')
+# LIMIT MAXQTY
+spot_limit_max_qty = get_symbol_info(exchange_info=raw_dump_exchange_infos['spot'], filterType='LOT_SIZE', info_name='maxQty')    
+# LIMIT MINQTY
+spot_limit_min_qty = get_symbol_info(exchange_info=raw_dump_exchange_infos['spot'], filterType='LOT_SIZE', info_name='minQty')        
+
+# MKT STEP SIZE
+spot_market_step_size = get_symbol_info(exchange_info=raw_dump_exchange_infos['spot'], filterType='MARKET_LOT_SIZE', info_name='stepSize')
+# MKT MAXQTY
+spot_market_max_qty = get_symbol_info(exchange_info=raw_dump_exchange_infos['spot'], filterType='MARKET_LOT_SIZE', info_name='maxQty')    
+# MKT MINQTY
+spot_market_min_qty = get_symbol_info(exchange_info=raw_dump_exchange_infos['spot'], filterType='MARKET_LOT_SIZE', info_name='minQty')      
+######################### SPOT
+
+
+
+
+# spot_market_step_size = get_symbol_info(
+#     # symbols=['BTCUSDT'],
+#     exchange_info=raw_dump_exchange_infos['spot'], 
+#     filterType='MARKET_LOT_SIZE', 
+#     info_name='stepSize')
+
+
+# raw_dump_exchange_infos['spot']['symbols'][10]
 
 # float('0.00000000')
 

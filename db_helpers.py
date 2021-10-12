@@ -1,4 +1,3 @@
-# from binance.client import Client
 import datetime
 from math import ceil
 import logging
@@ -7,6 +6,10 @@ import numpy as np
 import pandas as pd
 import os
 import json
+from copy import deepcopy
+
+
+
 
 
 def get_directories_from_param_path(param_path=None, db_parameters=None):
@@ -72,42 +75,45 @@ def batch_symbols_fn(symbols, batch_size):
         batch_symbols = symbols[int(j*batch_size):int((j+1)*batch_size)]
         yield batch_symbols
 
-def get_symbols(exchange_infos, logger):
-    spot_trading = list(filter(lambda x: x['status']== 'TRADING', exchange_infos['spot']['symbols']))
-    spot_trading_symbols = [d['symbol'] for d in spot_trading]
+# def get_symbols(exchange_infos, logger):
+#     spot_trading = list(filter(lambda x: x['status']== 'TRADING', exchange_infos['spot']['symbols']))
+#     spot_trading_symbols = [d['symbol'] for d in spot_trading]
 
-    spot_NOT_trading = list(filter(lambda x: x['status']!= 'TRADING', exchange_infos['spot']['symbols']))
-    spot_NOT_trading_symbols = [d['symbol'] for d in spot_NOT_trading]
+#     spot_NOT_trading = list(filter(lambda x: x['status']!= 'TRADING', exchange_infos['spot']['symbols']))
+#     spot_NOT_trading_symbols = [d['symbol'] for d in spot_NOT_trading]
 
-    usd_futs_trading = list(filter(lambda x: x['status']== 'TRADING', exchange_infos['usd_futs']['symbols']))
-    usd_futs_trading_symbols = [d['symbol'] for d in usd_futs_trading]
+#     usd_futs_trading = list(filter(lambda x: x['status']== 'TRADING', exchange_infos['usd_futs']['symbols']))
+#     usd_futs_trading_symbols = [d['symbol'] for d in usd_futs_trading]
 
-    usd_futs_NOT_trading = list(filter(lambda x: x['status']!= 'TRADING', exchange_infos['usd_futs']['symbols']))
-    usd_futs_NOT_trading_symbols = [d['symbol'] for d in usd_futs_NOT_trading]
-    if logger is not None:
-        logger.info(
-            dict(
-                origin='get_symbols', 
-                payload=dict(
-                    spot_trading = len(spot_trading),
-                    spot_NOT_trading =len(spot_NOT_trading),
-                    usd_futs_trading = len(usd_futs_trading),
-                    usd_futs_NOT_trading =len(usd_futs_NOT_trading)                    
+#     usd_futs_NOT_trading = list(filter(lambda x: x['status']!= 'TRADING', exchange_infos['usd_futs']['symbols']))
+#     usd_futs_NOT_trading_symbols = [d['symbol'] for d in usd_futs_NOT_trading]
+#     if logger is not None:
+#         logger.info(
+#             dict(
+#                 origin='get_symbols', 
+#                 payload=dict(
+#                     spot_trading = len(spot_trading),
+#                     spot_NOT_trading =len(spot_NOT_trading),
+#                     usd_futs_trading = len(usd_futs_trading),
+#                     usd_futs_NOT_trading =len(usd_futs_NOT_trading)                    
 
-                )))
+#                 )))
 
-    """CONSUMES DICT OF EXCHANGE INFOS AND EXTRACT SYMBOLS"""
-    result = {}
-    for t in exchange_infos.keys(): 
-        result[t] = [d['symbol'] for d in exchange_infos[t]['symbols']]
+#     """CONSUMES DICT OF EXCHANGE INFOS AND EXTRACT SYMBOLS"""
+#     result = {}
+#     for t in exchange_infos.keys(): 
+#         result[t] = [d['symbol'] for d in exchange_infos[t]['symbols']]
 
 
-    result['spot']=spot_trading_symbols
-    result['usd_futs']=usd_futs_trading_symbols
+#     result['spot']=spot_trading_symbols
+#     result['usd_futs']=usd_futs_trading_symbols
+
+#     result['spot_not_trading']=spot_NOT_trading_symbols
+#     result['usd_futs_not_trading']=usd_futs_NOT_trading_symbols
     
-    result['coin_futs_details']={d['symbol']:dict(pair=d['pair'], contractType=d['contractType']) for d in exchange_infos['coin_futs']['symbols']}
+#     result['coin_futs_details']={d['symbol']:dict(pair=d['pair'], contractType=d['contractType']) for d in exchange_infos['coin_futs']['symbols']}
 
-    return result 
+#     return result 
 
 def logger_setup(LOG_DIR):
     if not os.path.exists(LOG_DIR):
@@ -168,59 +174,38 @@ def equidistant_timestamps(series, interval):
     else: 
         return True
 
-# def get_all_symbols():
-#     x=Client(None, None)
-#     spot_info=x.get_exchange_info()
-#     all_spot_symbols=[s['symbol'] for s in spot_info['symbols']]
-#     usdt =list(filter(lambda x: len(x.split('USDT'))==2 and x.split('USDT')[1]=='', all_spot_symbols))
-#     btc =list(filter(lambda x: len(x.split('BTC'))==2 and x.split('BTC')[1]=='', all_spot_symbols))
-#     eth =list(filter(lambda x: len(x.split('ETH'))==2 and x.split('ETH')[1]=='', all_spot_symbols))
-#     bnb =list(filter(lambda x: len(x.split('BNB'))==2 and x.split('BNB')[1]=='', all_spot_symbols))
-#     return usdt, btc, eth, bnb
+
 
 quote_filter = lambda quote, symbols: list(filter(lambda x: len(x.split(quote))==2 and x.split(quote)[1]=='', symbols))
 base_filter = lambda quote, symbols: list(filter(lambda x: len(x.split(quote))==2 and x.split(quote)[0]=='', symbols))
 requote_map = lambda old_quote, new_quote, symbols: list(map(lambda x: x.split(old_quote)[0]+new_quote if len(x.split(old_quote))==2 else None, symbols ))
 
 
-# def get_futs_symbols():
-#     x=Client(None, None)
-#     spot_info=x.get_exchange_info()
-#     futs_info=x.futures_exchange_info()
-#     all_spot_symbols=[s['symbol'] for s in spot_info['symbols']]
-#     futs=[s['symbol'] for s in futs_info['symbols']]
-#     def btc(s):
-#         return s.split('USDT')[0]+'BTC'
-
-#     def eth(s):
-#         return s.split('USDT')[0]+'ETH'
-    
-#     def bnb(s):
-#         return s.split('USDT')[0]+'BNB'        
-
-#     futs_btc=[btc(s) for s in futs]
-#     futs_eth=[eth(s) for s in futs]
-#     futs_bnb=[bnb(s) for s in futs]
-
-#     futs_usdt=list(filter(lambda x: x in all_spot_symbols, futs))
-#     futs_btc=list(filter(lambda x: x in all_spot_symbols, futs_btc))
-#     futs_eth=list(filter(lambda x: x in all_spot_symbols, futs_eth))
-#     futs_bnb=list(filter(lambda x: x in all_spot_symbols, futs_bnb))
-#     return futs, futs_usdt, futs_btc, futs_eth, futs_bnb, all_spot_symbols
-
 def datetime_to_long(year, month, day, hour=0, minute=0, second=0):
     dt = datetime.datetime(year, month, day, hour=0, minute=0, second=0, microsecond=0)
     return (dt - datetime.datetime.fromtimestamp(0)).total_seconds()*1000
 
-def long_to_datetime_str(long, utc=True):
+# def long_to_datetime_str(long, utc=True):
+#     if long is None: return ''
+#     if utc:
+#         return datetime.datetime.fromtimestamp(long/1000, tz=datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+#     else:
+#         return datetime.datetime.fromtimestamp(long/1000).strftime('%Y-%m-%d %H:%M:%S')        
+
+def long_to_datetime_str(long, utc=True, ISO=False):
     if long is None: return ''
     if utc:
-        return datetime.datetime.fromtimestamp(long/1000, tz=datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+        dt=datetime.datetime.fromtimestamp(long/1000, tz=datetime.timezone.utc)
     else:
-        return datetime.datetime.fromtimestamp(long/1000).strftime('%Y-%m-%d %H:%M:%S')        
+        dt=datetime.datetime.fromtimestamp(long/1000)
+    if ISO: 
+        return dt.strftime('%Y-%m-%dT%H:%M:%SZ') 
+    else: 
+        return dt.strftime('%Y-%m-%d %H:%M:%S') 
 
-def datetime_to_str(dt):
+def datetime_to_str(dt, ISO=False):
+    if ISO: 
+        return dt.strftime('%Y-%m-%dT%H:%M:%SZ')    
     return dt.strftime('%Y-%m-%d %H:%M:%S')
 
-# def now_utc_long():
-#     return (datetime.datetime.now() - datetime.datetime.fromtimestamp(0)).total_seconds()*1000
+
