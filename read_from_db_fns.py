@@ -1,7 +1,7 @@
-from SymbolsDBClass import symbols_db
-from CandleDBClass import candle_db
-from OIDBClass import oi_db
-from FundingDBClass import funding_db
+from DB_class_symbols import symbols_db
+from DB_class_candles import candle_db
+from DB_class_oi import oi_db
+from DB_class_funding import funding_db
 from db_helpers import get_directories_from_param_path
 
 import json
