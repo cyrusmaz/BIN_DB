@@ -31,14 +31,14 @@ candle_interval='5m'
 read_candle_from_db(param_path=param_path, symbol=symbol, candle_interval=candle_interval, type_='spot', n=n, first_n=False, last_n=True)
 read_candle_from_db(param_path=param_path, symbol=symbol, candle_interval=candle_interval, type_='spot', n=n, first_n=True, last_n=False)
 
-read_candle_from_db(param_path=param_path, symbol=symbol, candle_interval=candle_interval,  type_='usd_futs', n=n, first_n=False, last_n=True)
-read_candle_from_db(param_path=param_path, symbol=symbol, candle_interval=candle_interval,  type_='usd_futs', n=n, first_n=True, last_n=False)
+read_candle_from_db(param_path=param_path, symbol=symbol, candle_interval=candle_interval,  type_='usdf', n=n, first_n=False, last_n=True)
+read_candle_from_db(param_path=param_path, symbol=symbol, candle_interval=candle_interval,  type_='usdf', n=n, first_n=True, last_n=False)
 
 
 
 
 from fill_wrappers import * 
-db=oi_db(DB_DIRECTORY='./', DB_NAME='tests.db', SYMBOL='BTCUSDT', INTERVAL='5m', TYPE='usd_futs', EXCHANGE='exchange2' )
+db=oi_db(DB_DIRECTORY='./', DB_NAME='tests.db', SYMBOL='BTCUSDT', INTERVAL='5m', TYPE='usdf', EXCHANGE='exchange2' )
 
 oi_backfill_fn(symbols=['BTCUSDT'],dbs={'BTCUSDT':db}, interval='5m', backfill=None,logger=None)
 
@@ -48,7 +48,7 @@ from delete_from_db_fns import *
 param_path='/home/cm/Documents/PY_DEV/DB/BINANCE/params.json'
 
 symbols = read_symbols_from_db(param_path=param_path)
-for symbol in symbols['usd_futs']:
+for symbol in symbols['usdf']:
     delete_oi_from_db(param_path=param_path, symbol=symbol, oi_interval='5m', n=6000, first_n=False, last_n=True)
 
 # delete_oi_from_db(param_path=param_path, symbol='ETHUSDT', oi_interval='5m', n=3000, first_n=False, last_n=True)
@@ -126,3 +126,41 @@ df
 
 # df.set_index('time',inplace=True)
 # df.sort_index(axis=0, inplace=True)
+
+
+
+
+
+
+
+
+param_path=param_path
+symbol='HOTUSDT'
+oi_interval='5m'
+
+
+
+
+# symbols_dir, usdf_candles_dir, spot_candles_dir, usdf_oi_dir, usdf_funding_dir, exchange = get_directories_from_param_path(param_path)
+r = get_directories_from_param_path(param_path)
+exchange = r['exchange']
+usdf_oi_dir =r['usdf_oi_dir']
+coinf_oi_dir =r['coinf_oi_dir']
+
+# if usdf:
+db_name=f'{symbol}_{oi_interval}_usdf_oi.db'
+db_dir=f'{usdf_oi_dir}{oi_interval}/'
+db_args_dict=dict(TYPE='usdf', EXCHANGE=exchange)    
+
+
+# elif coinf: 
+db_name=f'{symbol}_{oi_interval}_coinf_oi.db'
+db_dir=f'{coinf_oi_dir}{oi_interval}/'  
+db_args_dict=dict(TYPE='coinf', EXCHANGE=exchange)
+
+from DB_class_oi import oi_db
+oi_db_=oi_db(DB_DIRECTORY=db_dir, DB_NAME=db_name, SYMBOL=symbol, INTERVAL=oi_interval, READ_ONLY=False, **db_args_dict )
+oi_db_.get_last()
+oi_db_.delete_last()
+
+n=5

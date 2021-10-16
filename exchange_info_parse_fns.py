@@ -28,11 +28,11 @@ def get_symbols(exchange_infos, logger):
     spot_NOT_trading = list(filter(lambda x: x['status']!= 'TRADING', exchange_infos['spot']['symbols']))
     spot_NOT_trading_symbols = [d['symbol'] for d in spot_NOT_trading]
 
-    usd_futs_trading = list(filter(lambda x: x['status']== 'TRADING', exchange_infos['usd_futs']['symbols']))
-    usd_futs_trading_symbols = [d['symbol'] for d in usd_futs_trading]
+    usdf_trading = list(filter(lambda x: x['status']== 'TRADING', exchange_infos['usdf']['symbols']))
+    usdf_trading_symbols = [d['symbol'] for d in usdf_trading]
 
-    usd_futs_NOT_trading = list(filter(lambda x: x['status']!= 'TRADING', exchange_infos['usd_futs']['symbols']))
-    usd_futs_NOT_trading_symbols = [d['symbol'] for d in usd_futs_NOT_trading]
+    usdf_NOT_trading = list(filter(lambda x: x['status']!= 'TRADING', exchange_infos['usdf']['symbols']))
+    usdf_NOT_trading_symbols = [d['symbol'] for d in usdf_NOT_trading]
     if logger is not None:
         logger.info(
             dict(
@@ -40,8 +40,8 @@ def get_symbols(exchange_infos, logger):
                 payload=dict(
                     spot_trading = len(spot_trading),
                     spot_NOT_trading =len(spot_NOT_trading),
-                    usd_futs_trading = len(usd_futs_trading),
-                    usd_futs_NOT_trading =len(usd_futs_NOT_trading)                    
+                    usdf_trading = len(usdf_trading),
+                    usdf_NOT_trading =len(usdf_NOT_trading)                    
                 )))
 
     """CONSUMES DICT OF EXCHANGE INFOS AND EXTRACT SYMBOLS"""
@@ -51,11 +51,11 @@ def get_symbols(exchange_infos, logger):
 
 
     result['spot']=spot_trading_symbols
-    result['usd_futs']=usd_futs_trading_symbols
+    result['usdf']=usdf_trading_symbols
 
     result['spot_not_trading']=spot_NOT_trading_symbols
-    result['usd_futs_not_trading']=usd_futs_NOT_trading_symbols
+    result['usdf_not_trading']=usdf_NOT_trading_symbols
     
-    result['coin_futs_details']={d['symbol']:dict(pair=d['pair'], contractType=d['contractType']) for d in exchange_infos['coin_futs']['symbols']}
+    result['coinf_details']={d['symbol']:dict(pair=d['pair'], contractType=d['contractType']) for d in exchange_infos['coinf']['symbols']}
 
     return result 

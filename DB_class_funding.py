@@ -29,6 +29,9 @@ class funding_db():
             self.con = sqlite3.connect('file:'+DB_DIRECTORY+DB_NAME+'?mode=ro', uri=True)   
         else: 
             self.con = sqlite3.connect(DB_DIRECTORY+DB_NAME)
+
+        self.db_path = DB_DIRECTORY+DB_NAME
+
         self.cur = self.con.cursor()
 
         self.create_info_table()
@@ -61,7 +64,7 @@ class funding_db():
         if len(info_table)>0:
             q = self.query("""SELECT * FROM INFO_TABLE""")
             if q[0]!=(self.exchange, self.symbol, self.type):
-                raise Exception(f'funding_db - INFO_TABLE: {q[0]}, NEW PARAMETERS: {(self.exchange, self.symbol, self.type)}')
+                raise Exception(f'{self.db_path} funding_db - INFO_TABLE: {q[0]}, NEW PARAMETERS: {(self.exchange, self.symbol, self.type)}')
 
         if len(info_table)==0:
             create_table = f'''CREATE TABLE IF NOT EXISTS INFO_TABLE

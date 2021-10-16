@@ -14,7 +14,7 @@ import datetime
 
 
 
-def funding_forwardfill_fn(symbols,usd_futs, coin_futs, limit, rate_limit, dbs=None, startTimes=None, logger=None, memory_efficient=True):
+def funding_forwardfill_fn(symbols,usdf, coinf, limit, rate_limit, dbs=None, startTimes=None, logger=None, memory_efficient=True):
     """ 
         if startTimes is None then start at the beginning and go forward until new requests have length 1
         if startTimes is not None then start at startTimes and go forward until new requests have length 1
@@ -56,7 +56,7 @@ def funding_forwardfill_fn(symbols,usd_futs, coin_futs, limit, rate_limit, dbs=N
     if startTimes is None: startTimes=[1]*len(symbols)
     if dbs is not None: startTimes = [dbs[s].get_last()['fundingTime'] for s in symbols]
 
-    data = asyncio.run(get_futs_stats(**dict(symbols=symbols, stat='funding', limit=limit, usd_futs=usd_futs, coin_futs=coin_futs, startTimes=startTimes,  endTimes=None, logger=logger)))
+    data = asyncio.run(get_futs_stats(**dict(symbols=symbols, stat='funding', limit=limit, usdf=usdf, coinf=coinf, startTimes=startTimes,  endTimes=None, logger=logger)))
     new_data = deepcopy(data)
     total_requests_per_symbol += 1
     current_minute_weight += len(symbols)
@@ -84,7 +84,7 @@ def funding_forwardfill_fn(symbols,usd_futs, coin_futs, limit, rate_limit, dbs=N
                         reason='filling into present - zero results',
                         # interval=interval,
                         # futs=futs,
-                        usd_futs=usd_futs, coin_futs=coin_futs,
+                        usdf=usdf, coinf=coinf,
                         num_dropped_symbols=len(pops),
                         dropped_symbols=pops,
                         )))  
@@ -139,7 +139,7 @@ def funding_forwardfill_fn(symbols,usd_futs, coin_futs, limit, rate_limit, dbs=N
                                 reason='reached present time',
                                 # interval=interval,
                                 # futs=futs,
-                                usd_futs=usd_futs, coin_futs=coin_futs,
+                                usdf=usdf, coinf=coinf,
                                 num_dropped_symbols=len(pops),
                                 dropped_symbols=pops,
                                 )))  
@@ -161,7 +161,7 @@ def funding_forwardfill_fn(symbols,usd_futs, coin_futs, limit, rate_limit, dbs=N
         # total_requests_per_symbol += 1
         # current_minute_weight += len(symbols)
 
-        new_data = asyncio.run(get_futs_stats(**dict(symbols=symbols,stat='funding',usd_futs=usd_futs, coin_futs=coin_futs,  limit=limit, startTimes=startTimes, logger=logger)))
+        new_data = asyncio.run(get_futs_stats(**dict(symbols=symbols,stat='funding',usdf=usdf, coinf=coinf,  limit=limit, startTimes=startTimes, logger=logger)))
         total_requests_per_symbol += 1
         current_minute_weight += len(symbols)        
 
@@ -192,7 +192,7 @@ def funding_forwardfill_fn(symbols,usd_futs, coin_futs, limit, rate_limit, dbs=N
     for k,v in data.items():
         # print(f'(funding_forwardfill_fn) {k}, last entry: {long_to_datetime_str(last_insert_print[k])}')
         # print(f'funding_forwardfill_fn:{k} inserted:{len(v)} last entry:{long_to_datetime_str(last_insert_print[k])}') 
-        print(f'funding_forwardfill_fn:{k} usd_futs={usd_futs}, coin_futs={coin_futs}, inserted:{len(v)} last:{long_to_datetime_str(last_insert_print[k])}')            
+        print(f'funding_forwardfill_fn:{k} usdf={usdf}, coinf={coinf}, inserted:{len(v)} last:{long_to_datetime_str(last_insert_print[k])}')            
     return data
 
 

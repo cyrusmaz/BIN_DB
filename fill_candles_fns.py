@@ -8,7 +8,7 @@ import datetime
 
 def candles_backfill_fn(
     symbols,  interval, backfill, 
-    usd_futs, coin_futs, mark,limit, 
+    usdf, coinf, mark,limit, 
     rate_limit, index, dbs=None, 
     logger=None, memory_efficient=True):
     """ for backfilling candles start at present and go backward 
@@ -41,7 +41,7 @@ def candles_backfill_fn(
     if len(endTimes_prev)==0:
         endTimes_prev=None
 
-    data = asyncio.run(get_candles(**dict(symbols=symbols, interval=interval, limit=limit, endTimes=endTimes_prev, usd_futs=usd_futs, coin_futs=coin_futs, mark=mark, index=index, logger=logger)))
+    data = asyncio.run(get_candles(**dict(symbols=symbols, interval=interval, limit=limit, endTimes=endTimes_prev, usdf=usdf, coinf=coinf, mark=mark, index=index, logger=logger)))
     current_minute_weight += len(symbols)
     
 
@@ -63,7 +63,7 @@ def candles_backfill_fn(
                     payload=dict(
                         reason='backfilling from inception - zero results',
                         interval=interval,
-                        usd_futs=usd_futs, coin_futs=coin_futs, 
+                        usdf=usdf, coinf=coinf, 
                         num_dropped_symbols=len(pops),
                         dropped_symbols=pops,
                         )))  
@@ -115,7 +115,7 @@ def candles_backfill_fn(
                             payload=dict(
                                 reason='reached inception time',
                                 interval=interval,
-                                usd_futs=usd_futs, coin_futs=coin_futs, 
+                                usdf=usdf, coinf=coinf, 
                                 num_dropped_symbols=len(pops),
                                 dropped_symbols=pops,
                                 )))  
@@ -131,7 +131,7 @@ def candles_backfill_fn(
         if len(symbols)==0:
             break
 
-        new_data = asyncio.run(get_candles(**dict(symbols=symbols, interval=interval, limit=limit, endTimes=endTimes, usd_futs=usd_futs, coin_futs=coin_futs,  mark=mark, index=index, logger=logger)))
+        new_data = asyncio.run(get_candles(**dict(symbols=symbols, interval=interval, limit=limit, endTimes=endTimes, usdf=usdf, coinf=coinf,  mark=mark, index=index, logger=logger)))
         current_minute_weight += len(symbols)
 
         total_requests_per_symbol += 1
@@ -157,14 +157,14 @@ def candles_backfill_fn(
 
     data = {k:v[-backfill:] for k,v in data.items()} if backfill is not None else data
     for k,v in data.items():
-        print(f'candles_backfill_fn:{k} usd_futs:{usd_futs} coin_futs:{coin_futs}, mark={mark}, index={index}, interval:{interval} inserted:{len(v)} last:{long_to_datetime_str(last_insert_print[k])}')
+        print(f'candles_backfill_fn:{k} usdf:{usdf} coinf:{coinf}, mark={mark}, index={index}, interval:{interval} inserted:{len(v)} last:{long_to_datetime_str(last_insert_print[k])}')
         
     return data
 
 
 def candles_forwardfill_fn(
     symbols, interval, 
-    usd_futs, coin_futs, mark, index, 
+    usdf, coinf, mark, index, 
     limit, rate_limit, 
     startTimes_dict=None, dbs=None, logger=None):
     """ for backfilling candles start at present and go backward 
@@ -192,7 +192,7 @@ def candles_forwardfill_fn(
             startTime = startTimes_dict[symbol]
             startTimes_prev.append(startTime)     
    
-    data = asyncio.run(get_candles(**dict(symbols=symbols, interval=interval, limit=limit, startTimes=startTimes_prev, usd_futs=usd_futs, coin_futs=coin_futs, mark=mark, index=index, logger=logger)))
+    data = asyncio.run(get_candles(**dict(symbols=symbols, interval=interval, limit=limit, startTimes=startTimes_prev, usdf=usdf, coinf=coinf, mark=mark, index=index, logger=logger)))
 
     for symbol in symbols:
         if len(data[symbol])>0: last_insert_print[symbol]=data[symbol][-1][0]
@@ -211,7 +211,7 @@ def candles_forwardfill_fn(
                     payload=dict(
                         reason='filling into present - zero results',
                         interval=interval,
-                        usd_futs=usd_futs, coin_futs=coin_futs,
+                        usdf=usdf, coinf=coinf,
                         num_dropped_symbols=len(pops),
                         dropped_symbols=pops,
                         )))  
@@ -262,7 +262,7 @@ def candles_forwardfill_fn(
                             payload=dict(
                                 reason='reached present time',
                                 interval=interval,
-                                usd_futs=usd_futs, coin_futs=coin_futs,
+                                usdf=usdf, coinf=coinf,
                                 num_dropped_symbols=len(pops),
                                 dropped_symbols=pops,
                                 )))  
@@ -278,7 +278,7 @@ def candles_forwardfill_fn(
         if len(symbols)==0:
             break
 
-        data = asyncio.run(get_candles(**dict(symbols=symbols, interval=interval, limit=limit, startTimes=startTimes, usd_futs=usd_futs, coin_futs=coin_futs, mark=mark, index=index, logger=logger)))
+        data = asyncio.run(get_candles(**dict(symbols=symbols, interval=interval, limit=limit, startTimes=startTimes, usdf=usdf, coinf=coinf, mark=mark, index=index, logger=logger)))
 
         total_requests_per_symbol += 1
         current_minute_weight += len(symbols)
@@ -296,7 +296,7 @@ def candles_forwardfill_fn(
         startTimes_prev=startTimes        
 
     for k,v in data.items():
-        print(f'candles_forwardfill_fn:{k} usd_futs:{usd_futs}, coin_futs={coin_futs}, mark={mark}, index={index}, interval:{interval} inserted:{len(v)} last entry:{long_to_datetime_str(last_insert_print[k])}')
+        print(f'candles_forwardfill_fn:{k} usdf:{usdf}, coinf={coinf}, mark={mark}, index={index}, interval:{interval} inserted:{len(v)} last entry:{long_to_datetime_str(last_insert_print[k])}')
         
     return data
 

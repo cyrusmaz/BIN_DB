@@ -15,11 +15,11 @@ param_path='/home/cm/Documents/PY_DEV/DB/BINANCE/params.json'
 
 
 def delete_oi_from_db(param_path, symbol, oi_interval, n, first_n=False, last_n=False):
-    symbols_dir, usd_futs_candles_dir, spot_candles_dir, usd_futs_oi_dir, usd_futs_funding_dir, exchange = get_directories_from_param_path(param_path)
+    symbols_dir, usdf_candles_dir, spot_candles_dir, usdf_oi_dir, usdf_funding_dir, exchange = get_directories_from_param_path(param_path)
     if first_n == last_n: return
     if n<=0: return
-    dir_=usd_futs_oi_dir
-    db_args_dict=dict(TYPE='usd_futs', EXCHANGE=exchange)
+    dir_=usdf_oi_dir
+    db_args_dict=dict(TYPE='usdf', EXCHANGE=exchange)
     db_name=f'{symbol}_{oi_interval}_oi.db'
     db_dir=f'{dir_}{oi_interval}/'
     oi_db_=oi_db(DB_DIRECTORY=db_dir, DB_NAME=db_name, SYMBOL=symbol, INTERVAL=oi_interval, READ_ONLY=False, **db_args_dict )

@@ -22,25 +22,25 @@ def get_directories_from_param_path(param_path=None, db_parameters=None):
     db_dir = db_parameters['DB_DIRECTORY']
     candles_dir = db_dir+'CANDLES/'
 
-    usd_futs_candles_dir = candles_dir+'USD_FUTS/'
-    usd_futs_index_candles_dir = candles_dir+'USD_FUTS_INDEX/'
-    usd_futs_mark_candles_dir = candles_dir+'USD_FUTS_MARK/'
+    usdf_candles_dir = candles_dir+'USDF/'
+    usdf_index_candles_dir = candles_dir+'USDF_INDEX/'
+    usdf_mark_candles_dir = candles_dir+'USDF_MARK/'
 
-    coin_futs_candles_dir = candles_dir+'COIN_FUTS/'
-    coin_futs_index_candles_dir = candles_dir+'COIN_FUTS_INDEX/'
-    coin_futs_mark_candles_dir = candles_dir+'COIN_FUTS_MARK/'
+    coinf_candles_dir = candles_dir+'COINF/'
+    coinf_index_candles_dir = candles_dir+'COINF_INDEX/'
+    coinf_mark_candles_dir = candles_dir+'COINF_MARK/'
 
     spot_candles_dir = candles_dir+'SPOT/'
 
     # build the oi directory paths 
     oi_dir = db_dir+'OI/'
-    usd_futs_oi_dir = oi_dir+'USD_FUTS/'
-    coin_futs_oi_dir = oi_dir+'COIN_FUTS/'
+    usdf_oi_dir = oi_dir+'USDF/'
+    coinf_oi_dir = oi_dir+'COINF/'
 
     # build the funding directory paths
     funding_dir = db_dir+'FUNDING/'
-    usd_futs_funding_dir =  oi_dir+'FUNDING/USD_FUTS/'
-    coin_futs_funding_dir =  oi_dir+'FUNDING/COIN_FUTS/'
+    usdf_funding_dir =  funding_dir+'USDF/'
+    coinf_funding_dir =  funding_dir+'COINF/'
 
     # build the symbols directory path
     symbols_dir = db_dir+'SYMBOLS/'
@@ -48,19 +48,19 @@ def get_directories_from_param_path(param_path=None, db_parameters=None):
     exchange=db_parameters['EXCHANGE']
 
     output = dict(
-        usd_futs_candles_dir = usd_futs_candles_dir,
-        usd_futs_index_candles_dir = usd_futs_index_candles_dir,
-        usd_futs_mark_candles_dir = usd_futs_mark_candles_dir,
-        coin_futs_candles_dir = coin_futs_candles_dir,
-        coin_futs_index_candles_di = coin_futs_index_candles_dir,
-        coin_futs_mark_candles_dir = coin_futs_mark_candles_dir,
+        usdf_candles_dir = usdf_candles_dir,
+        usdf_index_candles_dir = usdf_index_candles_dir,
+        usdf_mark_candles_dir = usdf_mark_candles_dir,
+        coinf_candles_dir = coinf_candles_dir,
+        coinf_index_candles_di = coinf_index_candles_dir,
+        coinf_mark_candles_dir = coinf_mark_candles_dir,
         spot_candles_dir= spot_candles_dir,
         oi_dir = oi_dir,
-        usd_futs_oi_dir = usd_futs_oi_dir,
-        coin_futs_oi_dir = coin_futs_oi_dir,
+        usdf_oi_dir = usdf_oi_dir,
+        coinf_oi_dir = coinf_oi_dir,
         funding_dir = funding_dir,
-        usd_futs_funding_dir = usd_futs_funding_dir,
-        coin_futs_funding_dir = coin_futs_funding_dir,
+        usdf_funding_dir = usdf_funding_dir,
+        coinf_funding_dir = coinf_funding_dir,
         symbols_dir = symbols_dir,
         exchange = exchange)
 
@@ -82,11 +82,11 @@ def batch_symbols_fn(symbols, batch_size):
 #     spot_NOT_trading = list(filter(lambda x: x['status']!= 'TRADING', exchange_infos['spot']['symbols']))
 #     spot_NOT_trading_symbols = [d['symbol'] for d in spot_NOT_trading]
 
-#     usd_futs_trading = list(filter(lambda x: x['status']== 'TRADING', exchange_infos['usd_futs']['symbols']))
-#     usd_futs_trading_symbols = [d['symbol'] for d in usd_futs_trading]
+#     usdf_trading = list(filter(lambda x: x['status']== 'TRADING', exchange_infos['usdf']['symbols']))
+#     usdf_trading_symbols = [d['symbol'] for d in usdf_trading]
 
-#     usd_futs_NOT_trading = list(filter(lambda x: x['status']!= 'TRADING', exchange_infos['usd_futs']['symbols']))
-#     usd_futs_NOT_trading_symbols = [d['symbol'] for d in usd_futs_NOT_trading]
+#     usdf_NOT_trading = list(filter(lambda x: x['status']!= 'TRADING', exchange_infos['usdf']['symbols']))
+#     usdf_NOT_trading_symbols = [d['symbol'] for d in usdf_NOT_trading]
 #     if logger is not None:
 #         logger.info(
 #             dict(
@@ -94,8 +94,8 @@ def batch_symbols_fn(symbols, batch_size):
 #                 payload=dict(
 #                     spot_trading = len(spot_trading),
 #                     spot_NOT_trading =len(spot_NOT_trading),
-#                     usd_futs_trading = len(usd_futs_trading),
-#                     usd_futs_NOT_trading =len(usd_futs_NOT_trading)                    
+#                     usdf_trading = len(usdf_trading),
+#                     usdf_NOT_trading =len(usdf_NOT_trading)                    
 
 #                 )))
 
@@ -106,12 +106,12 @@ def batch_symbols_fn(symbols, batch_size):
 
 
 #     result['spot']=spot_trading_symbols
-#     result['usd_futs']=usd_futs_trading_symbols
+#     result['usdf']=usdf_trading_symbols
 
 #     result['spot_not_trading']=spot_NOT_trading_symbols
-#     result['usd_futs_not_trading']=usd_futs_NOT_trading_symbols
+#     result['usdf_not_trading']=usdf_NOT_trading_symbols
     
-#     result['coin_futs_details']={d['symbol']:dict(pair=d['pair'], contractType=d['contractType']) for d in exchange_infos['coin_futs']['symbols']}
+#     result['coinf_details']={d['symbol']:dict(pair=d['pair'], contractType=d['contractType']) for d in exchange_infos['coinf']['symbols']}
 
 #     return result 
 

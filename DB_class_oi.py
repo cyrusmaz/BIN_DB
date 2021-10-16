@@ -57,6 +57,9 @@ class oi_db():
 
         return json.loads(row[0][0])    
 
+    def delete_last_n(self, n):
+        print(f'DELETING LAST {n} FROM OI_TABLE, symbol: {self.symbol}, {self.type}')
+        self.execute(f"DELETE FROM OI_TABLE WHERE oi_time IN (SELECT oi_time FROM OI_TABLE ORDER BY oi_time DESC LIMIT {n})")
 
     def delete_last(self):
         self.execute(f"DELETE FROM OI_TABLE WHERE oi_time=(SELECT last_oi_time FROM LAST_INSERT_VIEW)") 

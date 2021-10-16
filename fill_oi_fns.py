@@ -7,8 +7,8 @@ import time
 import datetime
 from math import ceil
 
-def oi_backfill_fn(symbols, interval, backfill, usd_futs, coin_futs,limit,rate_limit, dbs=None,logger=None, memory_efficient=True,
-            coin_futs_details=None):
+def oi_backfill_fn(symbols, interval, backfill, usdf, coinf,limit,rate_limit, dbs=None,logger=None, memory_efficient=True,
+            coinf_details=None):
     """ for backfilling OI, start at present and go backward 
         until either backfill is reached or no new data comes in on each subsequent request"""
 
@@ -42,9 +42,9 @@ def oi_backfill_fn(symbols, interval, backfill, usd_futs, coin_futs,limit,rate_l
     data = asyncio.run(
         get_futs_stats(**dict(symbols=symbols, stat='oi', 
         period=interval, limit=limit,
-        usd_futs=usd_futs, coin_futs=coin_futs, 
+        usdf=usdf, coinf=coinf, 
         endTimes=endTimes_prev, logger=logger,
-        coin_futs_details=coin_futs_details)))
+        coinf_details=coinf_details)))
     current_minute_weight += len(symbols)
     total_requests_per_symbol += 1
     j+=1
@@ -68,7 +68,7 @@ def oi_backfill_fn(symbols, interval, backfill, usd_futs, coin_futs,limit,rate_l
                         reason='backfilling from inception - zero results',
                         interval=interval,
                         # futs=futs,
-                        usd_futs=usd_futs, coin_futs=coin_futs,
+                        usdf=usdf, coinf=coinf,
                         num_dropped_symbols=len(pops),
                         dropped_symbols=pops,
                         )))  
@@ -116,7 +116,7 @@ def oi_backfill_fn(symbols, interval, backfill, usd_futs, coin_futs,limit,rate_l
                             payload=dict(
                                 reason='reached inception time',
                                 interval=interval,
-                                usd_futs=usd_futs, coin_futs=coin_futs,
+                                usdf=usdf, coinf=coinf,
                                 num_dropped_symbols=len(pops),
                                 dropped_symbols=pops,
                                 )))  
@@ -135,10 +135,10 @@ def oi_backfill_fn(symbols, interval, backfill, usd_futs, coin_futs,limit,rate_l
         new_data = asyncio.run(
             get_futs_stats(**dict(
                 symbols=symbols, stat='oi',
-                usd_futs=usd_futs, coin_futs=coin_futs, 
+                usdf=usdf, coinf=coinf, 
                 period=interval, limit=limit, 
                 endTimes=endTimes, logger=logger,
-                coin_futs_details=coin_futs_details)))
+                coinf_details=coinf_details)))
 
         total_requests_per_symbol += 1
         current_minute_weight += len(symbols)
@@ -167,13 +167,13 @@ def oi_backfill_fn(symbols, interval, backfill, usd_futs, coin_futs,limit,rate_l
 
     data = {k:v[-backfill:] for k,v in data.items()} if backfill is not None else data
     for k,v in data.items():
-        print(f'oi_backfill_fn:{k} interval:{interval} usd_futs={usd_futs} coin_futs={coin_futs} inserted:{len(v)} last entry:{long_to_datetime_str(last_insert_print[k])}')   
+        print(f'oi_backfill_fn:{k} interval:{interval} usdf={usdf} coinf={coinf} inserted:{len(v)} last entry:{long_to_datetime_str(last_insert_print[k])}')   
         
     return data
 
 
-def oi_forwardfill_fn(symbols, interval, usd_futs, coin_futs, limit,rate_limit, startTimes_dict=None, dbs=None, logger=None, memory_efficient=True,
-            coin_futs_details=None):
+def oi_forwardfill_fn(symbols, interval, usdf, coinf, limit,rate_limit, startTimes_dict=None, dbs=None, logger=None, memory_efficient=True,
+            coinf_details=None):
     """ for backfilling OI, start at present and go backward 
         until either backfill is reached or no new data comes in on each subsequent request"""
 
@@ -205,54 +205,32 @@ def oi_forwardfill_fn(symbols, interval, usd_futs, coin_futs, limit,rate_limit, 
         get_futs_stats(**dict(
             symbols=symbols, stat='oi', 
             period=interval, limit=limit, 
-            usd_futs=usd_futs, coin_futs=coin_futs, 
+            usdf=usdf, coinf=coinf, 
             startTimes=startTimes_prev, 
             endTimes=None, logger=logger,
-            coin_futs_details=coin_futs_details)))
+            coinf_details=coinf_details)))
     current_minute_weight += len(symbols)
     total_requests_per_symbol += 1
     j+=1
 
-    for s in range(len(symbols)):
-        if len(data[symbols[s]])>0: last_insert_print[symbols[s]] = data[symbols[s]][0]['timestamp']
+    for symbol in symbols:
+        if len(data[symbol])>0: last_insert_print[symbol] = data[symbol][0]['timestamp']
         if dbs is not None: 
-            if len(data[symbols[s]])>0:
+            if len(data[symbol])>0:
                 dbs[symbol].delete_last()
-                dbs[symbols[s]].insert_multiple(data[symbols[s]])
-
-    pops = list(filter(lambda x: len(data[symbols[x]])==0, range(len(symbols))))
-    pops = [symbols[p] for p in pops]
-
-    if len(pops)>0: 
-        if logger is not None: 
-            logger.info(
-                dict(
-                    origin='oi_backfill_fn',
-                    payload=dict(
-                        reason='backfilling from inception - zero results',
-                        interval=interval,
-                        # futs=futs,
-                        usd_futs=usd_futs, coin_futs=coin_futs,
-                        num_dropped_symbols=len(pops),
-                        dropped_symbols=pops,
-                        )))  
-
-        for s in pops: 
-            startTimes_prev.pop(symbols.index(s))
-            if dbs is not None:
-                del dbs[s]
-            del symbols[symbols.index(s)]
+                dbs[symbol].insert_multiple(data[symbol])
 
     print('j={}'.format(j))
     print('current_minute_weight: {}'.format(current_minute_weight))
     print('total_requests_per_symbol: {}'.format(total_requests_per_symbol))    
-    endTimes_prev = []
 
     # if backfill is None: while_condition=lambda: True 
     # else: while_condition=lambda: ceil(backfill/limit)>total_requests_per_symbol
 
     while True:
+        # print(f'len(startTimes_prev):{len(startTimes_prev)}, len(symbols):{len(symbols)}, len(dbs):{len(dbs)}')
         # print(j)
+        # input('ll##&$*(#&%*(#&(%#&*( j+')
         start_time = datetime.datetime.now()
         if current_minute_weight + len(symbols) >= rate_limit:
             sleep_time = 61 - (datetime.datetime.now()-start_time).total_seconds()
@@ -264,36 +242,36 @@ def oi_forwardfill_fn(symbols, interval, usd_futs, coin_futs, limit,rate_limit, 
             start_time = datetime.datetime.now()
 
         endTimes=[data[symbol][0]['timestamp']- interval_len for symbol in symbols]
+        pops=[]
+        for symbol, startTime,endTime in zip(symbols,startTimes_prev, endTimes):
+            if startTime>endTime or len(data[symbol])==0:
+                pops.append(symbol)
 
-        if len(endTimes_prev)==0: 
-            endTimes_prev = endTimes
-        elif len(endTimes_prev)>0:
-            pops = []
-            for s in range(len(symbols)):
-                if endTimes[s]==endTimes_prev[s] or len(new_data[symbols[s]])<limit:
-                    # if new endtime == previous endtime that means there is no more data, stop requesting it. 
-                    pops.append(symbols[s])
-            if len(pops)>0: 
-                if logger is not None: 
-                    logger.info(
-                        dict(
-                            origin='oi_backfill_fn',
-                            payload=dict(
-                                reason='reached inception time',
-                                interval=interval,
-                                usd_futs=usd_futs, coin_futs=coin_futs,
-                                # futs=futs,
-                                num_dropped_symbols=len(pops),
-                                dropped_symbols=pops,
-                                )))  
+        if len(pops)>0: 
+            
+            # print(pops)
+            # input('***************************************************************************************pops')
+            if logger is not None: 
+                logger.info(
+                    dict(
+                        origin='oi_forwardfill_fn',
+                        payload=dict(
+                            reason='reached inception time',
+                            interval=interval,
+                            usdf=usdf, coinf=coinf,
+                            # futs=futs,
+                            num_dropped_symbols=len(pops),
+                            dropped_symbols=pops,
+                            )))  
 
-                for s in pops.copy(): 
-                    print(f'REACHED BEGINNING OF: {s}: {long_to_datetime_str(endTimes_prev[symbols.index(s)])}')
-                    if dbs is not None:
-                        del dbs[s]                    
-                    endTimes_prev.pop(symbols.index(s))
-                    endTimes.pop(symbols.index(s))
-                    del symbols[symbols.index(s)]
+            for s in pops.copy(): 
+                print(f'REACHED BEGINNING OF: {s}: {long_to_datetime_str(endTimes[symbols.index(s)])}')
+                if dbs is not None:
+                    del dbs[s]                    
+                # endTimes.pop(symbols.index(s))
+                startTimes_prev.pop(symbols.index(s))
+                endTimes.pop(symbols.index(s))
+                del symbols[symbols.index(s)]
 
         if len(symbols)==0:
             break
@@ -301,11 +279,11 @@ def oi_forwardfill_fn(symbols, interval, usd_futs, coin_futs, limit,rate_limit, 
         new_data = asyncio.run(
             get_futs_stats(**dict(
                 symbols=symbols, stat='oi',
-                usd_futs=usd_futs, coin_futs=coin_futs, 
+                usdf=usdf, coinf=coinf, 
                 period=interval, startTimes=startTimes_prev, 
                 limit=limit, endTimes=endTimes, 
                 logger=logger,
-                coin_futs_details=coin_futs_details)))
+                coinf_details=coinf_details)))
 
         total_requests_per_symbol += 1
         current_minute_weight += len(symbols)
@@ -321,6 +299,7 @@ def oi_forwardfill_fn(symbols, interval, usd_futs, coin_futs, limit,rate_limit, 
                 if len(new_data[symbol])>0: last_insert_print[symbol] = new_data[symbol][0]['timestamp']
                     
                 if dbs is not None: 
+                    # dbs[symbol].delete_last()
                     dbs[symbol].insert_multiple(new_data[symbol])
             # data[symbol]=new_data[symbol]
             # data[symbol]=new_data[symbol]+data[symbol]
@@ -330,9 +309,9 @@ def oi_forwardfill_fn(symbols, interval, usd_futs, coin_futs, limit,rate_limit, 
             else: 
                 data[symbol]=new_data[symbol]+data[symbol][:1]
 
-        endTimes_prev=endTimes
+        # endTimes_prev=deepcopy(endTimes)
 
     for k,v in data.items():
-        print(f'oi_backfill_fn:{k} interval:{interval} usd_futs={usd_futs} coin_futs={coin_futs} inserted:{len(v)} last entry:{long_to_datetime_str(last_insert_print[k])}')   
+        print(f'oi_forwardfill_fn:{k} interval:{interval} usdf={usdf} coinf={coinf} inserted:{len(v)} last entry:{long_to_datetime_str(last_insert_print[k])}')   
         
     return data

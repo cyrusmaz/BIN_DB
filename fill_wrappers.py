@@ -20,8 +20,8 @@ import datetime
 def candle_fill_wrapper(
     symbols, 
     interval, 
-    usd_futs, 
-    coin_futs,
+    usdf, 
+    coinf,
     mark,
     index,
     forward, 
@@ -33,15 +33,15 @@ def candle_fill_wrapper(
     startTimes_dict=None,
     logger=None, 
     backfill=None):
-    """spot candles:     usd_futs=False, coin_futs=False, mark=False, index=False
+    """spot candles:     usdf=False, coinf=False, mark=False, index=False
 
-       usd_futs candles: usd_futs=True, coin_futs=False, mark=False, index=False
-       usd_futs mark:    usd_futs=True, coin_futs=False, mark=True,  index=False
-       usd_futs index:   usd_futs=True, coin_futs=False, mark=False, index=True
+       usdf candles: usdf=True, coinf=False, mark=False, index=False
+       usdf mark:    usdf=True, coinf=False, mark=True,  index=False
+       usdf index:   usdf=True, coinf=False, mark=False, index=True
 
-       coin_futs candles: usd_futs=False, coin_futs=True, mark=False, index=False
-       coin_futs mark:    usd_futs=False, coin_futs=True, mark=True,  index=False
-       coin_futs index:   usd_futs=False, coin_futs=True, mark=False, index=True       
+       coinf candles: usdf=False, coinf=True, mark=False, index=False
+       coinf mark:    usdf=False, coinf=True, mark=True,  index=False
+       coinf index:   usdf=False, coinf=True, mark=False, index=True       
        """
     
     j=0
@@ -50,10 +50,10 @@ def candle_fill_wrapper(
 
         dbs={}
         for s in batch_symbols:
-            if not usd_futs and not coin_futs and not mark and not index:
+            if not usdf and not coinf and not mark and not index:
                 db_name=f'{s}_{interval}_spot_candles.db'
 
-            elif usd_futs: 
+            elif usdf: 
                 if not mark and not index:
                     db_name=f'{s}_{interval}_usdf_candles.db'
                 if mark and not index:
@@ -61,7 +61,7 @@ def candle_fill_wrapper(
                 elif not mark and index:
                     db_name=f'{s}_{interval}_usdf_index.db'
 
-            elif coin_futs:     
+            elif coinf:     
                 if not mark and not index:
                     db_name=f'{s}_{interval}_coinf_candles.db'               
                 if mark and not index:
@@ -77,7 +77,7 @@ def candle_fill_wrapper(
                 candles_forwardfill_fn(
                     symbols=batch_symbols,dbs=dbs, 
                     interval=interval, startTimes_dict=startTimes_dict, 
-                    coin_futs=coin_futs, usd_futs=usd_futs, 
+                    coinf=coinf, usdf=usdf, 
                     mark=mark, index=index, 
                     limit=limit, rate_limit=rate_limit, 
                     logger=logger)      
@@ -86,7 +86,7 @@ def candle_fill_wrapper(
                 candles_backfill_fn(
                     symbols=batch_symbols,dbs=dbs, 
                     interval=interval, backfill=backfill, 
-                    usd_futs=usd_futs, coin_futs=coin_futs, 
+                    usdf=usdf, coinf=coinf, 
                     mark=mark, index=index, 
                     limit=limit, rate_limit=rate_limit, 
                     logger=logger)
@@ -102,21 +102,21 @@ def candle_fill_wrapper(
                             forward=forward,
                             batch_size=batch_size,
                             interval=interval,
-                            usd_futs=usd_futs,
-                            coin_futs=coin_futs,
+                            usdf=usdf,
+                            coinf=coinf,
                             mark=mark,
                             index=index,
                             symbols=batch_symbols,)))
 
             print(f'candle_fill_wrapper {exception_time} - got an aiohttp.client_exceptions.ServerDisconnectedError, sleeping for 120 seconds before reattempting')
             print(f'candle_fill_wrapper {exception_time} - batch_size is {batch_size}, symbols remaining: {len(batch_symbols)}, forward: {forward}')
-            print(f'candle_fill_wrapper {exception_time} - usd_futs:{usd_futs},coin_futs:{coin_futs}, mark:{mark}, index:{index}')
+            print(f'candle_fill_wrapper {exception_time} - usdf:{usdf},coinf:{coinf}, mark:{mark}, index:{index}')
             time.sleep(120)
             if forward is True: 
                 candles_forwardfill_fn(
                     symbols=batch_symbols,dbs=dbs, 
                     interval=interval, backfill=backfill, 
-                    usd_futs=usd_futs, coin_futs=coin_futs, 
+                    usdf=usdf, coinf=coinf, 
                     mark=mark, index=index, 
                     limit=limit, rate_limit=rate_limit, 
                     logger=logger)            
@@ -125,23 +125,23 @@ def candle_fill_wrapper(
                 candles_backfill_fn(
                     symbols=batch_symbols, dbs=dbs, 
                     interval=interval, backfill=backfill, 
-                    usd_futs=usd_futs, coin_futs=coin_futs, 
+                    usdf=usdf, coinf=coinf, 
                     mark=mark, index=index, 
                     limit=limit, rate_limit=rate_limit, 
                     logger=logger)                    
 
-        print(f'{datetime.datetime.now()} time.sleep(60) - candle_fill_wrapper() end of batch {j}, batch_size={batch_size}, symbols:{len(symbols)},usd_futs:{usd_futs},coin_futs:{coin_futs}, mark:{mark}, index:{index}, interval:{interval}, forward:{forward}')
+        print(f'{datetime.datetime.now()} time.sleep(60) - candle_fill_wrapper() end of batch {j}, batch_size={batch_size}, symbols:{len(symbols)},usdf:{usdf},coinf:{coinf}, mark:{mark}, index:{index}, interval:{interval}, forward:{forward}')
         time.sleep(60)
 
-    print(f'candle_fill_wrapper() complete. usd_futs:{usd_futs},coin_futs:{coin_futs}, mark:{mark}, index:{index}, interval:{interval}, forward:{forward}')
+    print(f'candle_fill_wrapper() complete. usdf:{usdf},coinf:{coinf}, mark:{mark}, index:{index}, interval:{interval}, forward:{forward}')
 
 
-def funding_fill_wrapper(symbols, dbs, batch_size, usd_futs, coin_futs, limit, rate_limit, logger=None):
+def funding_fill_wrapper(symbols, dbs, batch_size, usdf, coinf, limit, rate_limit, logger=None):
     j=0
     for batch_symbols in batch_symbols_fn(symbols=symbols, batch_size=batch_size):
         j+=1
         try:
-            funding_forwardfill_fn(symbols=batch_symbols,dbs=dbs, usd_futs=usd_futs, coin_futs=coin_futs, limit=limit, rate_limit=rate_limit, logger=logger)
+            funding_forwardfill_fn(symbols=batch_symbols,dbs=dbs, usdf=usdf, coinf=coinf, limit=limit, rate_limit=rate_limit, logger=logger)
         except aiohttp.client_exceptions.ServerDisconnectedError: 
             exception_time = datetime.datetime.now()
             if logger is not None: 
@@ -154,10 +154,10 @@ def funding_fill_wrapper(symbols, dbs, batch_size, usd_futs, coin_futs, limit, r
                             symbols=batch_symbols,)))
             print(f'funding_fill_wrapper {exception_time} - got an aiohttp.client_exceptions.ServerDisconnectedError, sleeping for 60 seconds before reattempting')
             print(f'funding_fill_wrapper {exception_time} - batch_size is {batch_size}, symbols remaining: {len(batch_symbols)}')
-            print(f'usd_futs:{usd_futs},coin_futs:{coin_futs}')
+            print(f'usdf:{usdf},coinf:{coinf}')
             time.sleep(60)
-            funding_forwardfill_fn(symbols=batch_symbols,dbs=dbs, usd_futs=usd_futs, coin_futs=coin_futs, limit=limit, rate_limit=rate_limit, logger=logger)
-        print(f'{datetime.datetime.now()} time.sleep(60) - funding_fill_wrapper() end of batch {j}, usd_futs:{usd_futs}, coin_futs:{coin_futs}, batch_size={batch_size}, symbols:{len(symbols)}.')
+            funding_forwardfill_fn(symbols=batch_symbols,dbs=dbs, usdf=usdf, coinf=coinf, limit=limit, rate_limit=rate_limit, logger=logger)
+        print(f'{datetime.datetime.now()} time.sleep(60) - funding_fill_wrapper() end of batch {j}, usdf:{usdf}, coinf:{coinf}, batch_size={batch_size}, symbols:{len(symbols)}.')
         time.sleep(60)
     print(f'funding_fill_wrapper() complete')
 
@@ -167,44 +167,44 @@ def oi_fill_wrapper(
     interval, 
     forward, 
     batch_size, 
-    usd_futs, 
-    coin_futs, 
+    usdf, 
+    coinf, 
     limit,
     rate_limit,
     db_args_dict,
     startTimes_dict,
     dir_,
     logger=None,
-    coin_futs_details=None):
+    coinf_details=None):
     j=0
     for batch_symbols in batch_symbols_fn(symbols=symbols, batch_size=batch_size):
         j+=1
         dbs={}
         for s in batch_symbols:
-            if usd_futs:
+            if usdf:
                 db_name=f'{s}_{interval}_usdf_oi.db'
                 db_dir=f'{dir_}{interval}/'
-            elif coin_futs: 
+            elif coinf: 
                 db_name=f'{s}_{interval}_coinf_oi.db'
                 db_dir=f'{dir_}{interval}/'            
-            # db=oi_db(DB_DIRECTORY=db_dir, DB_NAME=db_name, SYMBOL=s, INTERVAL=oi_interval, TYPE='usd_usd_futs', EXCHANGE=exchange)
+            # db=oi_db(DB_DIRECTORY=db_dir, DB_NAME=db_name, SYMBOL=s, INTERVAL=oi_interval, TYPE='usd_usdf', EXCHANGE=exchange)
             dbs[s]=oi_db(DB_DIRECTORY=db_dir, DB_NAME=db_name, SYMBOL=s, INTERVAL=interval, **db_args_dict )
         try: 
             if forward is True: 
                 oi_forwardfill_fn(
                     symbols=batch_symbols,dbs=dbs, 
-                    interval=interval, usd_futs=usd_futs, 
-                    coin_futs=coin_futs,limit=limit, 
+                    interval=interval, usdf=usdf, 
+                    coinf=coinf,limit=limit, 
                     rate_limit=rate_limit,  logger=logger,
                     startTimes_dict=startTimes_dict, 
-                    coin_futs_details=coin_futs_details)          
+                    coinf_details=coinf_details)          
             elif forward is False:
                 oi_backfill_fn(
                     symbols=batch_symbols,dbs=dbs, 
-                    interval=interval, usd_futs=usd_futs, 
-                    coin_futs=coin_futs,limit=limit, 
+                    interval=interval, usdf=usdf, 
+                    coinf=coinf,limit=limit, 
                     rate_limit=rate_limit,  backfill=None,
-                    logger=logger,coin_futs_details=coin_futs_details)
+                    logger=logger,coinf_details=coinf_details)
 
         except aiohttp.client_exceptions.ServerDisconnectedError: 
             exception_time = datetime.datetime.now()
@@ -217,27 +217,27 @@ def oi_fill_wrapper(
                             forward=forward,
                             batch_size=batch_size,
                             interval=interval,
-                            # usd_futs=usd_futs,
+                            # usdf=usdf,
                             symbols=batch_symbols,)))
 
             print(f'oi_fill_wrapper {exception_time} - got an aiohttp.client_exceptions.ServerDisconnectedError, sleeping for 60 seconds before reattempting')
             print(f'oi_fill_wrapper {exception_time} - batch_size is {batch_size}, symbols remaining: {len(batch_symbols)}, forward: {forward}')
-            print(f'usd_futs:{usd_futs},coin_futs:{coin_futs}')
+            print(f'usdf:{usdf},coinf:{coinf}')
             time.sleep(60)
             if forward is True: 
                 oi_forwardfill_fn(
                     symbols=batch_symbols,dbs=dbs, 
-                    interval=interval, usd_futs=usd_futs, 
-                    coin_futs=coin_futs,
+                    interval=interval, usdf=usdf, 
+                    coinf=coinf,
                     limit=limit, rate_limit=rate_limit,  
-                    logger=logger ,coin_futs_details=coin_futs_details)          
+                    logger=logger ,coinf_details=coinf_details)          
             elif forward is False:
                 oi_backfill_fn(
                     symbols=batch_symbols,dbs=dbs, 
-                    interval=interval, usd_futs=usd_futs, 
-                    coin_futs=coin_futs,limit=limit, 
+                    interval=interval, usdf=usdf, 
+                    coinf=coinf,limit=limit, 
                     rate_limit=rate_limit,  backfill=None,
-                    logger=logger, coin_futs_details=coin_futs_details) 
+                    logger=logger, coinf_details=coinf_details) 
                                  
         print(f'{datetime.datetime.now()} time.sleep(60) - oi_fill_wrapper() end of batch {j}, batch_size={batch_size}, symbols:{len(symbols)}, interval:{interval}, forward:{forward}')
         time.sleep(60)
@@ -248,13 +248,13 @@ def prepare_for_funding_fetch(
     dir_, 
     symbols, 
     db_args_dict, 
-    usd_futs=False, 
-    coin_futs=False):
+    usdf=False, 
+    coinf=False):
     dbs_funding = {}
     for s in symbols:
-        if usd_futs:
+        if usdf:
             db_name=f'{s}_usdf_funding.db'
-        elif coin_futs: 
+        elif coinf: 
             db_name=f'{s}_coinf_funding.db'
         # dbs_funding[s]=funding_db(SYMBOL=s, DB_DIRECTORY=dir_, DB_NAME=db_name, TYPE='funding', EXCHANGE=EXCHANGE)
         dbs_funding[s]=funding_db(SYMBOL=s, DB_DIRECTORY=dir_, DB_NAME=db_name, **db_args_dict)
@@ -265,8 +265,8 @@ def prepare_for_oi_fetch(
     symbols, 
     oi_interval, 
     db_args_dict, 
-    usd_futs=False, 
-    coin_futs=False, 
+    usdf=False, 
+    coinf=False, 
     check_existence=True):
     symbols_exist = []
     symbols_dne = []
@@ -278,13 +278,13 @@ def prepare_for_oi_fetch(
     for s in symbols:
         j+=1
         print(j)
-        if usd_futs:
+        if usdf:
             db_name=f'{s}_{oi_interval}_usdf_oi.db'
             db_dir=f'{dir_}{oi_interval}/'
-        elif coin_futs: 
+        elif coinf: 
             db_name=f'{s}_{oi_interval}_coinf_oi.db'
             db_dir=f'{dir_}{oi_interval}/'            
-        # db=oi_db(DB_DIRECTORY=db_dir, DB_NAME=db_name, SYMBOL=s, INTERVAL=oi_interval, TYPE='usd_usd_futs', EXCHANGE=exchange)
+        # db=oi_db(DB_DIRECTORY=db_dir, DB_NAME=db_name, SYMBOL=s, INTERVAL=oi_interval, TYPE='usd_usdf', EXCHANGE=exchange)
         db=oi_db(DB_DIRECTORY=db_dir, DB_NAME=db_name, SYMBOL=s, INTERVAL=oi_interval, **db_args_dict )
         if check_existence is True: 
             last_insert = db.get_last()
@@ -309,18 +309,18 @@ def prepare_for_candle_fetch(
     symbols, 
     interval, 
     db_args_dict, 
-    usd_futs=False, 
-    coin_futs=False, 
+    usdf=False, 
+    coinf=False, 
     mark=False, 
     index=False, 
     check_existence=True, 
     logger=None):
 
     """if check_existence is True then check if db exists and has at least one record"""
-    """spot candles:     usd_futs=False, mark=False, index=False
-       usd_futs candles: usd_futs=True,  mark=False, index=False
-       mark:             usd_futs=True,  mark=True,  index=False
-       index:            usd_futs=True,  mark=False, index=True
+    """spot candles:     usdf=False, mark=False, index=False
+       usdf candles: usdf=True,  mark=False, index=False
+       mark:             usdf=True,  mark=True,  index=False
+       index:            usdf=True,  mark=False, index=True
        """
 
     symbols_exist = []
@@ -332,10 +332,10 @@ def prepare_for_candle_fetch(
         j+=1
         print(j)
 
-        if not usd_futs and not coin_futs and not mark and not index:
+        if not usdf and not coinf and not mark and not index:
             db_name=f'{s}_{interval}_spot_candles.db'
 
-        elif usd_futs: 
+        elif usdf: 
             if not mark and not index:
                 db_name=f'{s}_{interval}_usdf_candles.db'
             if mark and not index:
@@ -343,7 +343,7 @@ def prepare_for_candle_fetch(
             elif not mark and index:
                 db_name=f'{s}_{interval}_usdf_index.db'
 
-        elif coin_futs:     
+        elif coinf:     
             if not mark and not index:
                 db_name=f'{s}_{interval}_coinf_candles.db'               
             if mark and not index:
