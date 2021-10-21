@@ -67,11 +67,11 @@ def read_funding_from_db(param_path, symbol, n, usdf, coinf, first_n=False, last
     if usdf:
         db_name=f'{symbol}_usdf_funding.db'
         dir_=usdf_funding_dir
-        db_args_dict=dict(TYPE='funding', EXCHANGE=exchange)
+        db_args_dict=dict(TYPE='usdf_funding', EXCHANGE=exchange)
     elif coinf: 
         db_name=f'{symbol}_coinf_funding.db'
         dir_=coinf_funding_dir
-        db_args_dict=dict(TYPE='funding', EXCHANGE=exchange)
+        db_args_dict=dict(TYPE='coinf_funding', EXCHANGE=exchange)
         
     # db_args_dict=dict(TYPE='funding', EXCHANGE=exchange)
     # db_name=f'{symbol}_funding.db'

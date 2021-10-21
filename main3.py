@@ -299,7 +299,7 @@ if __name__ == "__main__":
 
 
     # set up symbols database 
-    db_symbols=symbols_db(DB_DIRECTORY=symbols_dir,DB_NAME='symbols.db',EXCHANGE='binance', LOGGER=logger)
+    db_symbols=symbols_db(DB_DIRECTORY=symbols_dir,DB_NAME='symbols.db',EXCHANGE=exchange, LOGGER=logger)
 
     # grab symbols from exchange and update the db
     if args.update_symbols or args.get_all: 

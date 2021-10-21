@@ -1,25 +1,46 @@
 param_path='/home/cm/Documents/PY_DEV/DB_BIN/params.json'
 from DB_reader import DB_reader
 dbr = DB_reader(param_path=param_path)
-dbr.symbols['coin_futs_details']
-
+dbr.symbols['coinf_details']
 
 symbol='BTCUSDT'
 n=5
 first_n=True
 last_n=False
-dbr.get_usdf_funding(symbol=symbol, n=n, first_n=first_n, last_n=last_n, return_df=True) 
-dbr.get_usdf_candles(symbol=symbol, n=n, interval='5m', first_n=first_n, last_n=last_n, return_df=False)
-dbr.get_usdf_index(symbol=symbol, n=n, interval='5m', first_n=first_n, last_n=last_n, return_df=False)
-dbr.get_usdf_mark(symbol=symbol, n=n, interval='5m', first_n=first_n, last_n=last_n, return_df=False)
+dbr.get_usdf_funding(symbol=symbol, n=n, first_n=first_n, last_n=last_n, return_df=True, ISO=False, utc=True) 
+dbr.get_usdf_candles(symbol=symbol, n=n, interval='5m', first_n=first_n, last_n=last_n, return_df=False, ISO=False, utc=True)
+dbr.get_usdf_index(symbol=symbol, n=n, interval='5m', first_n=first_n, last_n=last_n, return_df=False, ISO=False, utc=True)
+dbr.get_usdf_mark(symbol=symbol, n=n, interval='5m', first_n=first_n, last_n=last_n, return_df=False, ISO=False, utc=True)
 
-dbr.get_spot_candles(symbol=symbol, n=n, interval='5m', first_n=first_n, last_n=last_n, return_df=False)
+dbr.get_spot_candles(symbol=symbol, n=n, interval='5m', first_n=first_n, last_n=last_n, return_df=False, ISO=False, utc=True)
 
 symbol='BTCUSD_PERP'
-dbr.get_coinf_funding(symbol=symbol, n=n, first_n=first_n, last_n=last_n, return_df=True)
-dbr.get_coinf_candles(symbol=symbol, n=n, interval='5m', first_n=first_n, last_n=last_n, return_df=True)
-dbr.get_coinf_index(symbol=symbol, n=n, interval='5m', first_n=first_n, last_n=last_n, return_df=True)
-dbr.get_coinf_mark(symbol=symbol, n=n, interval='5m', first_n=first_n, last_n=last_n, return_df=True)
+dbr.get_coinf_funding(symbol=symbol, n=n, first_n=first_n, last_n=last_n, return_df=True, ISO=False, utc=True)
+dbr.get_coinf_candles(symbol=symbol, n=n, interval='5m', first_n=first_n, last_n=last_n, return_df=True, ISO=False, utc=True)
+dbr.get_coinf_index(symbol=symbol, n=n, interval='5m', first_n=first_n, last_n=last_n, return_df=True, ISO=False, utc=True)
+dbr.get_coinf_mark(symbol=symbol, n=n, interval='5m', first_n=first_n, last_n=last_n, return_df=True, ISO=False, utc=True)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -14,8 +14,8 @@ def get_symbol_info(exchange_info, filterType, info_name, symbols=None):
             filter_ = list(filter(lambda x: x['filterType']==filterType, symbol_info['filters']))[0]
             symbol_param = float(filter_[info_name])
         except Exception as e : 
-            print(f"{symbol} status: {symbol_info['status']}")
-            print(f'{symbol} - {e}')
+            # print(f"{symbol} status: {symbol_info['status']}")
+            # print(f'{symbol} - {e}')
             symbol_param=None
         output[symbol]=symbol_param
     return output 

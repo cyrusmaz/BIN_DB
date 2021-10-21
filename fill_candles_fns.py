@@ -64,6 +64,7 @@ def candles_backfill_fn(
                         reason='backfilling from inception - zero results',
                         interval=interval,
                         usdf=usdf, coinf=coinf, 
+                        mark=mark, index=index,
                         num_dropped_symbols=len(pops),
                         dropped_symbols=pops,
                         )))  
@@ -86,7 +87,7 @@ def candles_backfill_fn(
     else: while_condition=lambda: ceil(backfill/limit)>total_requests_per_symbol
 
     while while_condition() is True:
-        # print(j)
+        print(j)
         start_time = datetime.datetime.now()
         if current_minute_weight + len(symbols) >= rate_limit:
             sleep_time = 61 - (datetime.datetime.now()-start_time).total_seconds()
@@ -115,7 +116,8 @@ def candles_backfill_fn(
                             payload=dict(
                                 reason='reached inception time',
                                 interval=interval,
-                                usdf=usdf, coinf=coinf, 
+                                usdf=usdf, coinf=coinf,
+                                mark=mark, index=index,
                                 num_dropped_symbols=len(pops),
                                 dropped_symbols=pops,
                                 )))  
@@ -212,6 +214,7 @@ def candles_forwardfill_fn(
                         reason='filling into present - zero results',
                         interval=interval,
                         usdf=usdf, coinf=coinf,
+                        mark=mark, index=index,
                         num_dropped_symbols=len(pops),
                         dropped_symbols=pops,
                         )))  
@@ -232,7 +235,7 @@ def candles_forwardfill_fn(
     print('total_requests_per_symbol: {}'.format(total_requests_per_symbol))    
 
     while len(symbols)>0:
-        # print(j)
+        print(j)
         start_time = datetime.datetime.now()
         if current_minute_weight + len(symbols) >= rate_limit:
             sleep_time = 61 - (datetime.datetime.now()-start_time).total_seconds()
@@ -263,6 +266,7 @@ def candles_forwardfill_fn(
                                 reason='reached present time',
                                 interval=interval,
                                 usdf=usdf, coinf=coinf,
+                                mark=mark, index=index,
                                 num_dropped_symbols=len(pops),
                                 dropped_symbols=pops,
                                 )))  

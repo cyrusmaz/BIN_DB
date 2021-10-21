@@ -264,7 +264,8 @@ async def get_infos(types, logger):
     try:
         result = await asyncio.gather(*[get_info(type_=t) for t in types])
     except Exception as e:
-        logger.critical(dict(origin='get_futs_stats', payload=e))
+        if logger is not None: 
+            logger.critical(dict(origin='get_infos', payload=e))
         raise e
 
     output = {}
