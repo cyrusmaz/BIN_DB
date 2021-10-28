@@ -188,6 +188,7 @@ if __name__ == "__main__":
 
     custom_symbols = args.custom_symbols 
     if custom_symbols is not None: 
+        print('here')
         custom_symbols = args.custom_symbols 
         print(f'custom symbols: {custom_symbols}')
 

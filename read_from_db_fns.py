@@ -6,8 +6,8 @@ from db_helpers import get_directories_from_param_path
 
 import json
 
-# param_path='/home/cm/Documents/PY_DEV/DB/BINANCE/params.json'
-
+# param_path='/home/cm/Documents/PY_DEV/DB_BIN/params.json'
+# s=read_symbols_from_db(param_path, raw_dump=True)
 def read_symbols_from_db(param_path, raw_dump=False):
     # symbols_dir, usdf_candles_dir, spot_candles_dir, usdf_oi_dir, usdf_funding_dir, exchange = get_directories_from_param_path(param_path)
     r = get_directories_from_param_path(param_path)

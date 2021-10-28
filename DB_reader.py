@@ -58,6 +58,8 @@ class DB_reader():
         self.exchange_info_raw = None
         self.param_path = param_path
         self.symbol_info = dict()
+
+        self.update_times = dict()
         if self.param_path is not None: self.update()
 
     def update(self, param_path=None):
@@ -68,6 +70,9 @@ class DB_reader():
         self.exchange_info_raw = read_symbols_from_db(param_path=self.param_path, raw_dump=True)        
 
         self.parse_symbols_info()
+        self.update_times={k:long_to_datetime_str(long=v['serverTime'],utc=False, ISO=False) for k,v in self.exchange_info_raw.items()}
+        print('update_times: ')
+        print(self.update_times)
 
     def parse_symbols_info(self):
         ######################### USD FUTS
