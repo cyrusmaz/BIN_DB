@@ -74,6 +74,27 @@ class DB_reader():
         print('update_times: ')
         print(self.update_times)
 
+    def get_relevant_symbols(self, type_, symbol):
+        """GET ALL SYMBOLS THAT SHARE THE SAME BASE"""
+        base = self.symbol_info[type_]['base_quote'][symbol]['base']
+        
+        spot_list = list(filter(lambda x: 
+            self.symbol_info['spot']['base_quote'][x]['base']==base and x in self.symbols['spot'],
+            list(self.symbol_info['spot']['base_quote'].keys())))
+
+        usdf_list = list(filter(lambda x: 
+            self.symbol_info['usdf']['base_quote'][x]['base']==base and x in self.symbols['usdf'],
+            list(self.symbol_info['usdf']['base_quote'].keys())))
+
+        coinf_list = list(filter(lambda x: 
+            self.symbol_info['coinf']['base_quote'][x]['base']==base and x in self.symbols['coinf'],
+            list(self.symbol_info['coinf']['base_quote'].keys())))
+
+        return dict(
+            usdf={symbol:self.symbol_info['usdf']['base_quote'][symbol] for symbol in usdf_list}, 
+            spot={symbol:self.symbol_info['spot']['base_quote'][symbol] for symbol in spot_list}, 
+            coinf={symbol:self.symbol_info['coinf']['base_quote'][symbol] for symbol in coinf_list} )
+
     def parse_symbols_info(self):
         ######################### USD FUTS
         self.symbol_info['usdf'] = dict()
@@ -94,6 +115,9 @@ class DB_reader():
         self.symbol_info['usdf']['market']['max_qty']= get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='MARKET_LOT_SIZE', info_name='maxQty')    
         # MKT MINQTY
         self.symbol_info['usdf']['market']['min_qty']= get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='MARKET_LOT_SIZE', info_name='minQty')      
+        
+        self.symbol_info['usdf']['base_quote'] ={v['symbol']:{'base':v['baseAsset'], 'quote':v['quoteAsset']} for v in self.exchange_info_raw['usdf']['symbols']}        
+
         ######################### USD FUTS
 
         ######################### COIN FUTS
@@ -115,6 +139,7 @@ class DB_reader():
         self.symbol_info['coinf']['market']['max_qty']= get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='MARKET_LOT_SIZE', info_name='maxQty')    
         # MKT MINQTY
         self.symbol_info['coinf']['market']['min_qty']= get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='MARKET_LOT_SIZE', info_name='minQty')      
+        self.symbol_info['coinf']['base_quote'] ={v['symbol']:{'base':v['baseAsset'], 'quote':v['quoteAsset']} for v in self.exchange_info_raw['coinf']['symbols']}        
         ######################### COIN FUTS
 
         ######################### SPOT
@@ -136,6 +161,10 @@ class DB_reader():
         self.symbol_info['spot']['market']['max_qty']= get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='MARKET_LOT_SIZE', info_name='maxQty')    
         # MKT MINQTY
         self.symbol_info['spot']['market']['min_qty']= get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='MARKET_LOT_SIZE', info_name='minQty')      
+        
+
+        self.symbol_info['spot']['base_quote'] ={v['symbol']:{'base':v['baseAsset'], 'quote':v['quoteAsset']} for v in self.exchange_info_raw['spot']['symbols']}
+        
         ######################### SPOT        
 
 
@@ -193,7 +222,7 @@ class DB_reader():
         raw = read_candle_from_db(
             param_path=self.param_path, 
             candle_interval=interval, 
-            symbol=symbol, n=n, 
+            symbol=self.symbols['usdf_details'][symbol]['pair'], n=n, 
             usdf=True, coinf=False, 
             mark=False, index=True, 
             first_n=first_n, last_n=last_n)

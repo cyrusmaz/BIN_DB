@@ -46,9 +46,15 @@ def read_oi_from_db(param_path, symbol, oi_interval, coinf,usdf, n, first_n=Fals
         results.reverse()
         
     output = [json.loads(r[0]) for r in results]
-    first_time = results[0][1]
-    last_time = results[-1][1]  
-    print(f'symbol:{symbol} oi - first timestamp: {first_time}, last timestamp: {last_time}')
+    try: 
+        first_time = results[0][1]
+        last_time = results[-1][1]  
+        print(f'symbol:{symbol} oi, usdf:{usdf}, coinf:{coinf} - first timestamp: {first_time}, last timestamp: {last_time}')
+    except Exception as e: 
+        print(e)
+        print(f'symbol:{symbol} oi, usdf:{usdf}, coinf:{coinf}')
+        raise e
+
     del oi_db_
     return output
 
@@ -85,9 +91,14 @@ def read_funding_from_db(param_path, symbol, n, usdf, coinf, first_n=False, last
         results.reverse()
         
     output = [json.loads(r[0]) for r in results]
-    first_time = results[0][1]
-    last_time = results[-1][1]  
-    print(f'symbol:{symbol} funding - first timestamp: {first_time}, last timestamp: {last_time}')
+    try: 
+        first_time = results[0][1]
+        last_time = results[-1][1]  
+        print(f'symbol:{symbol} funding, usdf:{usdf}, coinf:{coinf}, - first timestamp: {first_time}, last timestamp: {last_time}')
+    except Exception as e: 
+        print(e)
+        print(f'symbol:{symbol} funding, usdf:{usdf}, coinf:{coinf}')
+        raise e
     del funding_db_
     return output
 
@@ -152,8 +163,13 @@ def read_candle_from_db(param_path, symbol,candle_interval,usdf, coinf, mark, in
         results.reverse()
         
     output = [json.loads(r[0]) for r in results]
-    first_time = results[0][1]
-    last_time = results[-1][1]  
-    print(f'symbol:{symbol} usdf:{usdf} coinf:{coinf} mark:{mark} index:{index} candles - first timestamp: {first_time}, last timestamp: {last_time}')
+    try: 
+        first_time = results[0][1]
+        last_time = results[-1][1]  
+        print(f'symbol:{symbol} usdf:{usdf} coinf:{coinf} mark:{mark} index:{index} candles - first timestamp: {first_time}, last timestamp: {last_time}')
+    except Exception as e: 
+        print(e)
+        print(f'symbol:{symbol} usdf:{usdf} coinf:{coinf} mark:{mark} index:{index} candles')
+        raise(e)
     del candle_db_
     return output

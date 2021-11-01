@@ -56,6 +56,8 @@ def get_symbols(exchange_infos, logger):
     result['spot_not_trading']=spot_NOT_trading_symbols
     result['usdf_not_trading']=usdf_NOT_trading_symbols
     
-    result['coinf_details']={d['symbol']:dict(pair=d['pair'], contractType=d['contractType']) for d in exchange_infos['coinf']['symbols']}
+    result['coinf_details'] = {d['symbol']:dict(pair=d['pair'], contractType=d['contractType']) for d in exchange_infos['coinf']['symbols']}
+    result['usdf_details'] = {d['symbol']:dict(pair=d['pair'], contractType=d['contractType']) for d in exchange_infos['usdf']['symbols']}
 
+    
     return result 

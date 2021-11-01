@@ -118,6 +118,9 @@ class symbols_db():
         added_coinf_details = list(filter(lambda x: x not in list(last_insert['coinf_details'].values()), list(new_symbols_dict['coinf_details'].values()))) if 'coinf_details' in last_insert.keys() else list(new_symbols_dict['coinf_details'].values())
         subtracted_coinf_details = list(filter(lambda x: x not in list(new_symbols_dict['coinf_details'].values()), list(last_insert['coinf_details'].values()))) if 'coinf_details' in last_insert.keys() else []
 
+        added_usdf_details = list(filter(lambda x: x not in list(last_insert['usdf_details'].values()), list(new_symbols_dict['usdf_details'].values()))) if 'usdf_details' in last_insert.keys() else list(new_symbols_dict['usdf_details'].values())
+        subtracted_usdf_details = list(filter(lambda x: x not in list(new_symbols_dict['usdf_details'].values()), list(last_insert['usdf_details'].values()))) if 'usdf_details' in last_insert.keys() else []
+
         coinf_updated = True if len(added_coinf)+len(subtracted_coinf)>0 else False
         usdf_updated = True if len(added_usdf)+len(subtracted_usdf)>0 else False
         spot_updated = True if len(added_spot)+len(subtracted_spot)>0 else False
@@ -129,17 +132,21 @@ class symbols_db():
             
             print(f"added_usdf={added_usdf}")
             print(f"subtracted_usdf={subtracted_usdf},")
+                 
+            print(f"added_usdf_details={added_usdf_details}")
+            print(f"subtracted_usdf_details={subtracted_usdf_details}")               
 
             print(f"added_coinf={added_coinf}")
             print(f"subtracted_coinf={subtracted_coinf}")
 
             print(f"added_coinf_details={added_coinf_details}")
-            print(f"subtracted_coinf_details={subtracted_coinf_details}")            
+            print(f"subtracted_coinf_details={subtracted_coinf_details}")   
+               
 
             new_insert_object = [
                 new_symbols_dict, 
-                dict(spot=added_spot,usdf=added_usdf, coinf=added_coinf, coinf_details=added_coinf_details), 
-                dict(spot=subtracted_spot,usdf=subtracted_usdf, coinf=subtracted_coinf, coinf_details=subtracted_coinf_details),
+                dict(spot=added_spot,usdf=added_usdf, usdf_details=added_usdf_details, coinf=added_coinf, coinf_details=added_coinf_details), 
+                dict(spot=subtracted_spot,usdf=subtracted_usdf, usdf_details=subtracted_usdf_details, coinf=subtracted_coinf, coinf_details=subtracted_coinf_details),
                 spot_updated,
                 usdf_updated,
                 coinf_updated,

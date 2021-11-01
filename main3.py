@@ -318,10 +318,12 @@ if __name__ == "__main__":
     spot_symbols_of_interest=symbols['spot']
     coinf_symbols_of_interest=symbols['coinf']
     coinf_symbols_of_interest_details=symbols['coinf_details']   
+    usdf_symbols_of_interest_details=symbols['usdf_details']  
 
     coinf_perps = list(filter(lambda s: len(s.split('_PERP'))==2 and s.split('_PERP')[1]=='',  coinf_symbols_of_interest)) 
     # list(set([s['pair'] for s in coinf_symbols_of_interest_details.values()]))
     coinf_pairs_of_interest = list(set([s['pair'] for s in coinf_symbols_of_interest_details.values()]))
+    usdf_pairs_of_interest = list(set([s['pair'] for s in usdf_symbols_of_interest_details.values()]))
 
     # USDF OI
     if args.usdf_oi or args.get_all: 
@@ -508,7 +510,7 @@ if __name__ == "__main__":
 
     # USDF INDEX 
     if args.usdf_index or args.get_all: 
-        if custom_symbols is not None: usdf_symbols_of_interest=custom_symbols
+        if custom_symbols is not None: usdf_pairs_of_interest=custom_symbols
 
         candle_grab_fn(
             dir_=usdf_index_candles_dir, 
@@ -524,7 +526,7 @@ if __name__ == "__main__":
             rate_limit = USDF_CANDLE_RATE_LIMIT,              
             logger=logger, 
             candle_interval=candle_interval, 
-            symbols=usdf_symbols_of_interest)
+            symbols=usdf_pairs_of_interest)
 
     # COINF INDEX
     if args.coinf_index or args.get_all: 
