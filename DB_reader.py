@@ -6,19 +6,33 @@ from db_helpers import long_to_datetime_str
 
 class DB_reader():
     def __init__(self,param_path=None):
-        self.candle_map = [
+        self.candle_map_spot_usdf = [
             'open_utc', 
             'open', 
             'high', 
             'low', 
             'close',
-            'volume',
+            'base_volume',
             'close_utc',
-            'quote_asset_volume',
+            'quote_volume',
             'num_trades', 
             'taker_buy_base', 
             'taker_buy_quote',
             'ignore']
+
+        self.candle_map_coinf = [
+            'open_utc', 
+            'open', 
+            'high', 
+            'low', 
+            'close',
+            'quote_volume',
+            'close_utc',
+            'base_volume',
+            'num_trades', 
+            'taker_buy_quote', 
+            'taker_buy_base',
+            'ignore']            
 
         self.index_mark_map = [
             'open_time',
@@ -74,167 +88,254 @@ class DB_reader():
         print('update_times: ')
         print(self.update_times)
 
-    def get_relevant_symbols(self, type_, symbol):
+    def get_relevant_symbols(self, type_=None, symbol=None, base=None):
         """GET ALL SYMBOLS THAT SHARE THE SAME BASE"""
-        base = self.symbol_info[type_]['base_quote'][symbol]['base']
-        
+        if base is None:
+            base = self.symbol_info[type_][symbol]['base']
+
         spot_list = list(filter(lambda x: 
-            self.symbol_info['spot']['base_quote'][x]['base']==base and x in self.symbols['spot'],
-            list(self.symbol_info['spot']['base_quote'].keys())))
+            self.symbol_info['spot'][x]['base']==base and x in self.symbols['spot'],
+            list(self.symbol_info['spot'].keys())))
 
         usdf_list = list(filter(lambda x: 
-            self.symbol_info['usdf']['base_quote'][x]['base']==base and x in self.symbols['usdf'],
-            list(self.symbol_info['usdf']['base_quote'].keys())))
+            self.symbol_info['usdf'][x]['base']==base and x in self.symbols['usdf'],
+            list(self.symbol_info['usdf'].keys())))
 
         coinf_list = list(filter(lambda x: 
-            self.symbol_info['coinf']['base_quote'][x]['base']==base and x in self.symbols['coinf'],
-            list(self.symbol_info['coinf']['base_quote'].keys())))
+            self.symbol_info['coinf'][x]['base']==base and x in self.symbols['coinf'],
+            list(self.symbol_info['coinf'].keys())))
 
         return dict(
-            usdf={symbol:self.symbol_info['usdf']['base_quote'][symbol] for symbol in usdf_list}, 
-            spot={symbol:self.symbol_info['spot']['base_quote'][symbol] for symbol in spot_list}, 
-            coinf={symbol:self.symbol_info['coinf']['base_quote'][symbol] for symbol in coinf_list} )
+            usdf={symbol:self.symbol_info['usdf'][symbol] for symbol in usdf_list}, 
+            spot={symbol:self.symbol_info['spot'][symbol] for symbol in spot_list}, 
+            coinf={symbol:self.symbol_info['coinf'][symbol] for symbol in coinf_list} )
 
     def parse_symbols_info(self):
+
+        self.symbol_info['usdf']= {
+            v['symbol']:{
+                'contract_type': v['contractType'] if 'contractType' in v.keys() else None,
+                'contract_size':v['contractSize'] if 'contractSize' in v.keys() else None,
+                'base':v['baseAsset'] if 'baseAsset' in v.keys() else None,
+                'quote':v['quoteAsset'] if 'quoteAsset' in v.keys() else None,
+
+                'tick_size': get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='PRICE_FILTER', info_name='tickSize', symbols=[v['symbol']])[v['symbol']],
+                'step_size': {
+                    'limit' : get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='LOT_SIZE', info_name='stepSize', symbols=[v['symbol']])[v['symbol']],
+                    'market': get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='MARKET_LOT_SIZE', info_name='stepSize', symbols=[v['symbol']])[v['symbol']],
+                },
+
+                'max_qty': {
+                    'limit' : get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='LOT_SIZE', info_name='maxQty', symbols=[v['symbol']])[v['symbol']],
+                    'market': get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='MARKET_LOT_SIZE', info_name='maxQty', symbols=[v['symbol']])[v['symbol']],
+                },
+                'min_qty': {
+                    'limit' : get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='LOT_SIZE', info_name='minQty', symbols=[v['symbol']])[v['symbol']],
+                    'market': get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='MARKET_LOT_SIZE', info_name='minQty', symbols=[v['symbol']])[v['symbol']],
+                }
+
+                } for v in self.exchange_info_raw['usdf']['symbols']}   
         ######################### USD FUTS
-        self.symbol_info['usdf'] = dict()
-        self.symbol_info['usdf']['tick_size'] = get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='PRICE_FILTER', info_name='tickSize')
+        # self.symbol_info['usdf'] = dict()
+        # self.symbol_info['usdf']['tick_size'] = get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='PRICE_FILTER', info_name='tickSize')
 
-        # LIMIT STEP SIZE
-        self.symbol_info['usdf']['limit']=dict()
-        self.symbol_info['usdf']['limit']['step_size']= get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='LOT_SIZE', info_name='stepSize')
-        # LIMIT MAXQTY
-        self.symbol_info['usdf']['limit']['max_qty']= get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='LOT_SIZE', info_name='maxQty')    
-        # LIMIT MINQTY
-        self.symbol_info['usdf']['limit']['min_qty']= get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='LOT_SIZE', info_name='minQty')        
+        # # LIMIT STEP SIZE
+        # self.symbol_info['usdf']['limit']=dict()
+        # self.symbol_info['usdf']['limit']['step_size']= get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='LOT_SIZE', info_name='stepSize')
+        # # LIMIT MAXQTY
+        # self.symbol_info['usdf']['limit']['max_qty']= get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='LOT_SIZE', info_name='maxQty')    
+        # # LIMIT MINQTY
+        # self.symbol_info['usdf']['limit']['min_qty']= get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='LOT_SIZE', info_name='minQty')        
 
-        # MKT STEP SIZE
-        self.symbol_info['usdf']['market']=dict()
-        self.symbol_info['usdf']['market']['step_size']= get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='MARKET_LOT_SIZE', info_name='stepSize')
-        # MKT MAXQTY
-        self.symbol_info['usdf']['market']['max_qty']= get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='MARKET_LOT_SIZE', info_name='maxQty')    
-        # MKT MINQTY
-        self.symbol_info['usdf']['market']['min_qty']= get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='MARKET_LOT_SIZE', info_name='minQty')      
+        # # MKT STEP SIZE
+        # self.symbol_info['usdf']['market']=dict()
+        # self.symbol_info['usdf']['market']['step_size']= get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='MARKET_LOT_SIZE', info_name='stepSize')
+        # # MKT MAXQTY
+        # self.symbol_info['usdf']['market']['max_qty']= get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='MARKET_LOT_SIZE', info_name='maxQty')    
+        # # MKT MINQTY
+        # self.symbol_info['usdf']['market']['min_qty']= get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='MARKET_LOT_SIZE', info_name='minQty')      
         
-        self.symbol_info['usdf']['base_quote'] ={v['symbol']:{'base':v['baseAsset'], 'quote':v['quoteAsset']} for v in self.exchange_info_raw['usdf']['symbols']}        
+        # self.symbol_info['usdf']['base_quote'] ={v['symbol']:{'base':v['baseAsset'], 'quote':v['quoteAsset']} for v in self.exchange_info_raw['usdf']['symbols']}        
 
         ######################### USD FUTS
 
         ######################### COIN FUTS
-        self.symbol_info['coinf'] = dict()
-        self.symbol_info['coinf']['tick_size'] = get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='PRICE_FILTER', info_name='tickSize')
+        # self.symbol_info['coinf'] = dict()
+        # self.symbol_info['coinf']['tick_size'] = get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='PRICE_FILTER', info_name='tickSize')
+        self.symbol_info['coinf']= {
+            v['symbol']:{
+                'contract_type': v['contractType'] if 'contractType' in v.keys() else None,
+                'contract_size':v['contractSize'] if 'contractSize' in v.keys() else None,
+                'base':v['baseAsset'] if 'baseAsset' in v.keys() else None,
+                'quote':v['quoteAsset'] if 'quoteAsset' in v.keys() else None,
 
-        # LIMIT STEP SIZE
-        self.symbol_info['coinf']['limit']=dict()
-        self.symbol_info['coinf']['limit']['step_size']= get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='LOT_SIZE', info_name='stepSize')
-        # LIMIT MAXQTY
-        self.symbol_info['coinf']['limit']['max_qty']= get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='LOT_SIZE', info_name='maxQty')    
-        # LIMIT MINQTY
-        self.symbol_info['coinf']['limit']['min_qty']= get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='LOT_SIZE', info_name='minQty')        
+                'tick_size': get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='PRICE_FILTER', info_name='tickSize', symbols=[v['symbol']])[v['symbol']],
+                'step_size': {
+                    'limit' : get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='LOT_SIZE', info_name='stepSize', symbols=[v['symbol']])[v['symbol']],
+                    'market': get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='MARKET_LOT_SIZE', info_name='stepSize', symbols=[v['symbol']])[v['symbol']],
+                },
 
-        # MKT STEP SIZE
-        self.symbol_info['coinf']['market']=dict()
-        self.symbol_info['coinf']['market']['step_size']= get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='MARKET_LOT_SIZE', info_name='stepSize')
-        # MKT MAXQTY
-        self.symbol_info['coinf']['market']['max_qty']= get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='MARKET_LOT_SIZE', info_name='maxQty')    
-        # MKT MINQTY
-        self.symbol_info['coinf']['market']['min_qty']= get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='MARKET_LOT_SIZE', info_name='minQty')      
-        self.symbol_info['coinf']['base_quote'] ={v['symbol']:{'base':v['baseAsset'], 'quote':v['quoteAsset']} for v in self.exchange_info_raw['coinf']['symbols']}        
+                'max_qty': {
+                    'limit' : get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='LOT_SIZE', info_name='maxQty', symbols=[v['symbol']])[v['symbol']],
+                    'market': get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='MARKET_LOT_SIZE', info_name='maxQty', symbols=[v['symbol']])[v['symbol']],
+                },
+                'min_qty': {
+                    'limit' : get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='LOT_SIZE', info_name='minQty', symbols=[v['symbol']])[v['symbol']],
+                    'market': get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='MARKET_LOT_SIZE', info_name='minQty', symbols=[v['symbol']])[v['symbol']],
+                }
+
+                } for v in self.exchange_info_raw['coinf']['symbols']}   
+
+
+        # # LIMIT STEP SIZE
+        # self.symbol_info['coinf']['limit']=dict()
+        # self.symbol_info['coinf']['limit']['step_size']= get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='LOT_SIZE', info_name='stepSize')
+        # # LIMIT MAXQTY
+        # self.symbol_info['coinf']['limit']['max_qty']= get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='LOT_SIZE', info_name='maxQty')    
+        # # LIMIT MINQTY
+        # self.symbol_info['coinf']['limit']['min_qty']= get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='LOT_SIZE', info_name='minQty')        
+
+        # # MKT STEP SIZE
+        # self.symbol_info['coinf']['market']=dict()
+        # self.symbol_info['coinf']['market']['step_size']= get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='MARKET_LOT_SIZE', info_name='stepSize')
+        # # MKT MAXQTY
+        # self.symbol_info['coinf']['market']['max_qty']= get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='MARKET_LOT_SIZE', info_name='maxQty')    
+        # # MKT MINQTY
+        # self.symbol_info['coinf']['market']['min_qty']= get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='MARKET_LOT_SIZE', info_name='minQty')      
+        # self.symbol_info['coinf']['base_quote'] ={v['symbol']:{'base':v['baseAsset'], 'quote':v['quoteAsset']} for v in self.exchange_info_raw['coinf']['symbols']}        
+        
         ######################### COIN FUTS
 
         ######################### SPOT
-        self.symbol_info['spot'] = dict()
-        self.symbol_info['spot']['tick_size'] = get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='PRICE_FILTER', info_name='tickSize')
+        # self.symbol_info['spot'] = dict()
+        # self.symbol_info['spot']['tick_size'] = get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='PRICE_FILTER', info_name='tickSize')
 
-        # LIMIT STEP SIZE
-        self.symbol_info['spot']['limit']=dict()
-        self.symbol_info['spot']['limit']['step_size']= get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='LOT_SIZE', info_name='stepSize')
-        # LIMIT MAXQTY
-        self.symbol_info['spot']['limit']['max_qty']= get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='LOT_SIZE', info_name='maxQty')    
-        # LIMIT MINQTY
-        self.symbol_info['spot']['limit']['min_qty']= get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='LOT_SIZE', info_name='minQty')        
+        # # LIMIT STEP SIZE
+        # self.symbol_info['spot']['limit']=dict()
+        # self.symbol_info['spot']['limit']['step_size']= get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='LOT_SIZE', info_name='stepSize')
+        # # LIMIT MAXQTY
+        # self.symbol_info['spot']['limit']['max_qty']= get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='LOT_SIZE', info_name='maxQty')    
+        # # LIMIT MINQTY
+        # self.symbol_info['spot']['limit']['min_qty']= get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='LOT_SIZE', info_name='minQty')        
 
-        # MKT STEP SIZE
-        self.symbol_info['spot']['market']=dict()
-        self.symbol_info['spot']['market']['step_size']= get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='MARKET_LOT_SIZE', info_name='stepSize')
-        # MKT MAXQTY
-        self.symbol_info['spot']['market']['max_qty']= get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='MARKET_LOT_SIZE', info_name='maxQty')    
-        # MKT MINQTY
-        self.symbol_info['spot']['market']['min_qty']= get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='MARKET_LOT_SIZE', info_name='minQty')      
+        # # MKT STEP SIZE
+        # self.symbol_info['spot']['market']=dict()
+        # self.symbol_info['spot']['market']['step_size']= get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='MARKET_LOT_SIZE', info_name='stepSize')
+        # # MKT MAXQTY
+        # self.symbol_info['spot']['market']['max_qty']= get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='MARKET_LOT_SIZE', info_name='maxQty')    
+        # # MKT MINQTY
+        # self.symbol_info['spot']['market']['min_qty']= get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='MARKET_LOT_SIZE', info_name='minQty')      
         
 
-        self.symbol_info['spot']['base_quote'] ={v['symbol']:{'base':v['baseAsset'], 'quote':v['quoteAsset']} for v in self.exchange_info_raw['spot']['symbols']}
+        # self.symbol_info['spot']['base_quote'] ={v['symbol']:{'base':v['baseAsset'], 'quote':v['quoteAsset']} for v in self.exchange_info_raw['spot']['symbols']}
         
+        self.symbol_info['spot']= {
+            v['symbol']:{
+                'contract_type': v['contractType'] if 'contractType' in v.keys() else None,
+                'contract_size':v['contractSize'] if 'contractSize' in v.keys() else None,
+                'base':v['baseAsset'] if 'baseAsset' in v.keys() else None,
+                'quote':v['quoteAsset'] if 'quoteAsset' in v.keys() else None,
+
+                'tick_size': get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='PRICE_FILTER', info_name='tickSize', symbols=[v['symbol']])[v['symbol']],
+                'step_size': {
+                    'limit' : get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='LOT_SIZE', info_name='stepSize', symbols=[v['symbol']])[v['symbol']],
+                    'market': get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='MARKET_LOT_SIZE', info_name='stepSize', symbols=[v['symbol']])[v['symbol']],
+                },
+
+                'max_qty': {
+                    'limit' : get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='LOT_SIZE', info_name='maxQty', symbols=[v['symbol']])[v['symbol']],
+                    'market': get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='MARKET_LOT_SIZE', info_name='maxQty', symbols=[v['symbol']])[v['symbol']],
+                },
+                'min_qty': {
+                    'limit' : get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='LOT_SIZE', info_name='minQty', symbols=[v['symbol']])[v['symbol']],
+                    'market': get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='MARKET_LOT_SIZE', info_name='minQty', symbols=[v['symbol']])[v['symbol']],
+                }
+
+                } for v in self.exchange_info_raw['spot']['symbols']}   
+
         ######################### SPOT        
 
-
-    def get_spot_candles(self, symbol, interval, n, first_n, last_n, return_df=False, ISO=False, utc=True):
+    def get_spot_candles(self, symbol, interval, n=None, first_n=None, last_n=None, min_time=None, max_time=None, return_df=False, ISO=False, utc=True, time_index=True):
         raw = read_candle_from_db(
             param_path=self.param_path, 
             candle_interval=interval, 
             symbol=symbol, n=n, 
+            min_time=min_time, max_time=max_time, 
             usdf=False, coinf=False, 
             mark=False, index=False, 
             first_n=first_n, last_n=last_n)
         if return_df: 
-            df = pd.DataFrame(data=raw, columns=self.candle_map,dtype=float)
+            df = pd.DataFrame(data=raw, columns=self.candle_map_spot_usdf,dtype=float)
             df['time']=df['open_utc'].apply(long_to_datetime_str,ISO=ISO, utc=utc)
             df.drop(columns=['ignore'], inplace=True)
+            if time_index: 
+                df.set_index('time',inplace=True)
+                df.sort_index(axis=0, inplace=True)                 
             return df
         else: 
             return raw
 
-
-    def get_usdf_candles(self, symbol, interval, n, first_n, last_n, return_df=False, ISO=False, utc=True):
+    def get_usdf_candles(self, symbol, interval, n=None, first_n=None, last_n=None, min_time=None, max_time=None, return_df=False, ISO=False, utc=True,  time_index=True):
         raw = read_candle_from_db(
             param_path=self.param_path, 
             candle_interval=interval, 
             symbol=symbol, n=n, 
             usdf=True, coinf=False, 
             mark=False, index=False, 
+            min_time=min_time, max_time=max_time, 
             first_n=first_n, last_n=last_n)
         if return_df: 
-            df = pd.DataFrame(data=raw, columns=self.candle_map,dtype=float)
+            df = pd.DataFrame(data=raw, columns=self.candle_map_spot_usdf,dtype=float)
             df['time']=df['open_utc'].apply(long_to_datetime_str,ISO=ISO, utc=utc)
             df.drop(columns=['ignore'], inplace=True)
+            if time_index: 
+                df.set_index('time',inplace=True)
+                df.sort_index(axis=0, inplace=True)                
             return df
         else: 
             return raw
 
-    def get_coinf_candles(self, symbol, interval, n, first_n, last_n, return_df=False, ISO=False, utc=True):
+    def get_coinf_candles(self, symbol, interval, n=None, first_n=None, last_n=None, min_time=None, max_time=None, return_df=False, ISO=False, utc=True, time_index=True):
         raw = read_candle_from_db(
             param_path=self.param_path, 
             candle_interval=interval, 
             symbol=symbol, n=n, 
             usdf=False, coinf=True, 
-            mark=False, index=False, 
+            mark=False, index=False,
+            min_time=min_time, max_time=max_time,  
             first_n=first_n, last_n=last_n)
         if return_df: 
-            df = pd.DataFrame(data=raw, columns=self.candle_map,dtype=float)
+            df = pd.DataFrame(data=raw, columns=self.candle_map_coinf,dtype=float)
             df['time']=df['open_utc'].apply(long_to_datetime_str,ISO=ISO, utc=utc)
             df.drop(columns=['ignore'], inplace=True)
+            if time_index: 
+                df.set_index('time',inplace=True)
+                df.sort_index(axis=0, inplace=True)                
             return df
         else: 
             return raw        
 
-
-    def get_usdf_index(self, symbol, interval, n, first_n, last_n, return_df=False, ISO=False, utc=True):
+    def get_usdf_index(self, symbol, interval, n=None, first_n=None, last_n=None, min_time=None, max_time=None, return_df=False, ISO=False, utc=True, time_index=True):
         raw = read_candle_from_db(
             param_path=self.param_path, 
             candle_interval=interval, 
             symbol=self.symbols['usdf_details'][symbol]['pair'], n=n, 
             usdf=True, coinf=False, 
             mark=False, index=True, 
+            min_time=min_time, max_time=max_time, 
             first_n=first_n, last_n=last_n)
         if return_df: 
             df = pd.DataFrame(data=raw, columns=self.index_mark_map,dtype=float)
             df['time']=df['open_time'].apply(long_to_datetime_str,ISO=ISO, utc=utc)
             df.drop(columns=list(filter(lambda x: 'ignore' in x, self.index_mark_map)), inplace=True)
+            if time_index: 
+                df.set_index('time',inplace=True)
+                df.sort_index(axis=0, inplace=True)                
             return df
         else: 
             return raw
 
-    def get_coinf_index(self, symbol, interval, n, first_n, last_n, return_df=False, ISO=False, utc=True):
+    def get_coinf_index(self, symbol, interval, n=None, first_n=None, last_n=None, min_time=None, max_time=None, return_df=False, ISO=False, utc=True, time_index=True):
         """symbol=self.symbols['coinf_details'][symbol]['pair'] UNLIKE THE OTHER 6 CANDLE FNs IN THIS CLASS"""
         raw = read_candle_from_db(
             param_path=self.param_path, 
@@ -242,100 +343,133 @@ class DB_reader():
             symbol=self.symbols['coinf_details'][symbol]['pair'], n=n, 
             usdf=False, coinf=True, 
             mark=False, index=True, 
+            min_time=min_time, max_time=max_time, 
             first_n=first_n, last_n=last_n)
         if return_df: 
             df = pd.DataFrame(data=raw, columns=self.index_mark_map,dtype=float)
             df['time']=df['open_time'].apply(long_to_datetime_str,ISO=ISO, utc=utc)
             df.drop(columns=list(filter(lambda x: 'ignore' in x, self.index_mark_map)), inplace=True)
+            if time_index: 
+                df.set_index('time',inplace=True)
+                df.sort_index(axis=0, inplace=True)                
             return df
         else: 
             return raw
 
-    def get_usdf_mark(self, symbol, interval, n, first_n, last_n, return_df=False, ISO=False, utc=True):
+    def get_usdf_mark(self, symbol, interval, n=None, first_n=None, last_n=None, min_time=None, max_time=None, return_df=False, ISO=False, utc=True, time_index=True):
         raw = read_candle_from_db(
             param_path=self.param_path, 
             candle_interval=interval, 
             symbol=symbol, n=n, 
             usdf=True, coinf=False, 
             mark=True, index=False, 
+            min_time=min_time, max_time=max_time, 
             first_n=first_n, last_n=last_n)
         if return_df: 
             df = pd.DataFrame(data=raw, columns=self.index_mark_map,dtype=float)
             df['time']=df['open_time'].apply(long_to_datetime_str,ISO=ISO, utc=utc)
             df.drop(columns=list(filter(lambda x: 'ignore' in x, self.index_mark_map)), inplace=True)
+            if time_index: 
+                df.set_index('time',inplace=True)
+                df.sort_index(axis=0, inplace=True)                
             return df
         else: 
             return raw
 
-    def get_coinf_mark(self, symbol, interval, n, first_n, last_n, return_df=False, ISO=False, utc=True):
+    def get_coinf_mark(self, symbol, interval, n=None, first_n=None, last_n=None, min_time=None, max_time=None, return_df=False, ISO=False, utc=True, time_index=True):
         raw = read_candle_from_db(
             param_path=self.param_path, 
             candle_interval=interval, 
             symbol=symbol, n=n, 
             usdf=False, coinf=True, 
             mark=True, index=False, 
+            min_time=min_time, max_time=max_time, 
             first_n=first_n, last_n=last_n)
         if return_df: 
             df = pd.DataFrame(data=raw, columns=self.index_mark_map,dtype=float)
             df['time']=df['open_time'].apply(long_to_datetime_str,ISO=ISO, utc=utc)
             df.drop(columns=list(filter(lambda x: 'ignore' in x, self.index_mark_map)), inplace=True)
+            if time_index: 
+                df.set_index('time',inplace=True)
+                df.sort_index(axis=0, inplace=True)                
             return df
         else: 
             return raw
 
-
-    def get_coinf_funding(self, symbol, n, first_n, last_n, return_df=False, ISO=False, utc=True):
+    def get_coinf_funding(self, symbol, n=None, first_n=None, last_n=None, min_time=None, max_time=None, return_df=False, ISO=False, utc=True, time_index=True):
         raw = read_funding_from_db(
             param_path=self.param_path, 
             symbol=symbol, n=n, 
             usdf=False, coinf=True, 
+            min_time=min_time, max_time=max_time, 
             first_n=first_n, last_n=last_n)
         if return_df: 
             df = pd.DataFrame(data=raw, columns=self.funding_map,dtype=float)
             df['time']=df['fundingTime'].apply(long_to_datetime_str,ISO=ISO, utc=utc)
+            if time_index: 
+                df.set_index('time',inplace=True)
+                df.sort_index(axis=0, inplace=True)                
             return df
         else: 
             return raw
        
-
-
-    def get_usdf_funding(self, symbol, n, first_n, last_n, return_df=False, ISO=False, utc=True):
+    def get_usdf_funding(self, symbol, n=None, first_n=None, last_n=None, min_time=None, max_time=None, return_df=False, ISO=False, utc=True, time_index=True):
         raw = read_funding_from_db(
             param_path=self.param_path, 
             symbol=symbol, n=n, 
             usdf=True, coinf=False, 
+            min_time=min_time, max_time=max_time, 
             first_n=first_n, last_n=last_n)
         if return_df: 
             df = pd.DataFrame(data=raw, columns=self.funding_map,dtype=float)
             df['time']=df['fundingTime'].apply(long_to_datetime_str,ISO=ISO, utc=utc)
+            if time_index: 
+                df.set_index('time',inplace=True)
+                df.sort_index(axis=0, inplace=True)                
             return df
         else: 
             return raw
 
-
-    def get_coinf_oi(self, symbol, interval, n, first_n, last_n, return_df=False, ISO=False, utc=True):
+    def get_coinf_oi(self, symbol, interval, n=None, first_n=None, last_n=None, min_time=None, max_time=None, return_df=False, ISO=False, utc=True, time_index=True):
         raw= read_oi_from_db(
             param_path=self.param_path, symbol=symbol, 
             usdf=False, coinf=True, 
             oi_interval=interval, n=n, 
+            min_time=min_time, max_time=max_time, 
             first_n=first_n, last_n=last_n)
 
         if return_df: 
             df = pd.DataFrame(data=raw, columns=self.coinf_oi_map,dtype=float)
             df['time']=df['timestamp'].apply(long_to_datetime_str,ISO=ISO, utc=utc)
+            if time_index: 
+                df.set_index('time',inplace=True)
+                df.sort_index(axis=0, inplace=True)                
             return df
         else: 
             return raw
 
-    def get_usdf_oi(self, symbol, interval, n, first_n, last_n, return_df=False, ISO=False, utc=True):
+    def get_usdf_oi(self, symbol, interval, n=None, first_n=None, last_n=None, min_time=None, max_time=None, return_df=False, ISO=False, utc=True, time_index=True):
         raw= read_oi_from_db(
             param_path=self.param_path, symbol=symbol, 
             usdf=True, coinf=False, 
             oi_interval=interval, n=n, 
+            min_time=min_time, max_time=max_time, 
             first_n=first_n, last_n=last_n)
         if return_df: 
             df = pd.DataFrame(data=raw, columns=self.usdf_oi_map,dtype=float)
             df['time']=df['timestamp'].apply(long_to_datetime_str,ISO=ISO, utc=utc)
+            if time_index: 
+                df.set_index('time',inplace=True)
+                df.sort_index(axis=0, inplace=True)                
             return df
         else: 
             return raw
+
+    def get_oi_db(self, symbol, oi_interval, coinf, usdf):
+        return get_oi_db(param_path=self.param_path, symbol=symbol, oi_interval=oi_interval, coinf=coinf, usdf=usdf)
+
+    def get_candle_db(self, symbol,candle_interval,usdf, coinf, mark, index):
+        return get_candle_db(param_path=self.param_path, symbol=symbol,candle_interval=candle_interval,usdf=usdf, coinf=coinf, mark=mark, index=index)        
+
+    def get_funding_db(self, symbol, usdf, coinf):
+        return get_funding_db(param_path=self.param_path, symbol=symbol, usdf=usdf, coinf=coinf)

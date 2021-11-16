@@ -14,12 +14,6 @@ class candle_db():
             self.type = TYPE
             self.exchange = EXCHANGE
 
-            # print(DB_DIRECTORY+DB_NAME)
-            # print(self.symbol)
-            # print(self.interval)
-            # print(self.type)
-            # print(self.exchange)             
-            
             if not os.path.exists(DB_DIRECTORY):
                 print(f"CREATING DIRECTORY: {DB_DIRECTORY}")
                 os.makedirs(DB_DIRECTORY)
@@ -30,14 +24,9 @@ class candle_db():
                 self.con = sqlite3.connect(DB_DIRECTORY+DB_NAME)
             self.cur = self.con.cursor()
             
-            # print('before info table')
             self.create_info_table()
-            # print('before candle table')            
             self.create_candle_table()
-            # print('before view')                        
             self.create_view()
-            # print('after view') 
-            # print('*************************************************************************** ')
 
         except Exception as e: 
             # input('hee')

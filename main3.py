@@ -31,7 +31,6 @@ def oi_grab_fn(
             dir_=dir_, 
             symbols=symbols_exist, 
             startTimes_dict=startTimes_dict,
-            # dbs=dbs_exist, 
             interval=oi_interval, 
             forward=True, 
             usdf=usdf, 
@@ -48,7 +47,6 @@ def oi_grab_fn(
             dir_=dir_, 
             symbols=symbols_exist, 
             startTimes_dict=startTimes_dict,
-            # dbs=dbs_exist, 
             interval=oi_interval, 
             forward=False, 
             usdf=usdf, 
@@ -65,7 +63,6 @@ def oi_grab_fn(
             dir_=dir_, 
             symbols=symbols_dne, 
             startTimes_dict=startTimes_dict,
-            # dbs=dbs_dne, 
             interval=oi_interval, 
             forward=False, 
             usdf=usdf, 
@@ -97,7 +94,6 @@ def candle_grab_fn(
     if forward: 
         candle_fill_wrapper(
             symbols=symbols_exist, 
-            # dbs=dbs_exist, 
             interval=candle_interval, 
             usdf=usdf, 
             coinf=coinf,
@@ -116,7 +112,6 @@ def candle_grab_fn(
     if backward=='exists' or backward=='exist' or backward=='all': 
         candle_fill_wrapper(
             symbols=symbols_exist, 
-            # dbs=dbs_exist, 
             interval=candle_interval, 
             usdf=usdf, 
             coinf=coinf,
@@ -135,7 +130,6 @@ def candle_grab_fn(
     if backward=='dne' or backward=='all': 
         candle_fill_wrapper(
             symbols=symbols_dne, 
-            # dbs=dbs_dne, 
             interval=candle_interval, 
             usdf=usdf, 
             coinf=coinf,
@@ -192,7 +186,7 @@ if __name__ == "__main__":
         custom_symbols = args.custom_symbols 
         print(f'custom symbols: {custom_symbols}')
 
-    param_path = '/mnt/nvme1n1/DB/BINANCE/params.json' if args.nvme1n1 else '/home/cm/Documents/PY_DEV/DB_BIN/params.json'
+    param_path = '/mnt/nvme1n1/DB/BINANCE/params.json' if args.nvme1n1 else '/home/cm/Documents/PY_DEV/BIN_DB/params.json'
     # param_path = '/home/cm/Documents/PY_DEV/DB_BIN/params.json'
 
     # get parameters
@@ -243,35 +237,6 @@ if __name__ == "__main__":
     coinf_funding_dir=paths['coinf_funding_dir']
     symbols_dir=paths['symbols_dir']
     exchange=paths['exchange']
-
-    # # build the candles directory paths
-    # candles_dir = db_dir+'CANDLES/'
-    # usdf_candles_dir = candles_dir+'USDF/'
-    # usdf_index_candles_dir = candles_dir+'USDF_INDEX/'
-    # usdf_mark_candles_dir = candles_dir+'USDF_MARK/'
-
-    # coinf_candles_dir = candles_dir+'COINF/'
-    # coinf_index_candles_dir = candles_dir+'COINF_INDEX/'
-    # coinf_mark_candles_dir = candles_dir+'COINF_MARK/'
-
-    # spot_candles_dir = candles_dir+'SPOT/'
-
-    # # build the oi directory paths 
-    # oi_dir = db_dir+'OI/'
-    # usdf_oi_dir = oi_dir+'USDF/'
-    # coinf_oi_dir = oi_dir+'COINF/'
-
-    # # build the funding directory paths
-    # funding_dir = db_dir+'FUNDING/'
-    # usdf_funding_dir =  oi_dir+'FUNDING/USDF/'
-    # coinf_funding_dir =  oi_dir+'FUNDING/COINF/'
-
-    # # build the symbols directory path
-    # symbols_dir = db_dir+'SYMBOLS/'
-
-
-
-
 
 
     # extract exchange and exchange_types 
