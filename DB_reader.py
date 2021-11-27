@@ -3,6 +3,8 @@ from exchange_info_parse_fns import *
 
 import pandas as pd
 from db_helpers import long_to_datetime_str
+from functools import reduce
+
 
 class DB_reader():
     def __init__(self,param_path=None):
@@ -88,27 +90,84 @@ class DB_reader():
         print('update_times: ')
         print(self.update_times)
 
-    def get_relevant_symbols(self, type_=None, symbol=None, base=None):
-        """GET ALL SYMBOLS THAT SHARE THE SAME BASE"""
-        if base is None:
+    def get_relevant_symbols_for_lists(self, type_=None, symbols=[], bases=[], quotes=[]):
+        intermediate_result = []
+        if type_ is not None: 
+            for s in symbols: 
+                intermediate_result.append(
+                    self.get_relevant_symbols( 
+                        type_=type_, symbol=s, base=None, quote=None, return_details=False))
+
+        if bases is not None: 
+            for base in bases: 
+                intermediate_result.append(
+                    self.get_relevant_symbols(
+                        type_=None, symbol=None, base=base, quote=None, return_details=False))
+
+        if quotes is not None: 
+            for quote in quotes: 
+                intermediate_result.append(
+                    self.get_relevant_symbols( 
+                        type_=None, symbol=None, base=None, quote=quote, return_details=False))
+
+        return reduce(lambda x, y: {s:x[s]+y[s] for s in x.keys()}, intermediate_result)
+
+    def get_relevant_symbols(self, type_=None, symbol=None, base=None, quote=None, return_details=False):
+        """FOR SINGLE SYMBOL OR BASE OR QUOTE"""
+        if base is None and quote is None:
+            """NO BASE NO QUOTE JUST SYMBOL AND TYPE"""
             base = self.symbol_info[type_][symbol]['base']
 
-        spot_list = list(filter(lambda x: 
-            self.symbol_info['spot'][x]['base']==base and x in self.symbols['spot'],
-            list(self.symbol_info['spot'].keys())))
+            spot_list = list(filter(lambda x: 
+                self.symbol_info['spot'][x]['base']==base and x in self.symbols['spot'],
+                list(self.symbol_info['spot'].keys())))
 
-        usdf_list = list(filter(lambda x: 
-            self.symbol_info['usdf'][x]['base']==base and x in self.symbols['usdf'],
-            list(self.symbol_info['usdf'].keys())))
+            usdf_list = list(filter(lambda x: 
+                self.symbol_info['usdf'][x]['base']==base and x in self.symbols['usdf'],
+                list(self.symbol_info['usdf'].keys())))
 
-        coinf_list = list(filter(lambda x: 
-            self.symbol_info['coinf'][x]['base']==base and x in self.symbols['coinf'],
-            list(self.symbol_info['coinf'].keys())))
+            coinf_list = list(filter(lambda x: 
+                self.symbol_info['coinf'][x]['base']==base and x in self.symbols['coinf'],
+                list(self.symbol_info['coinf'].keys())))
 
-        return dict(
-            usdf={symbol:self.symbol_info['usdf'][symbol] for symbol in usdf_list}, 
-            spot={symbol:self.symbol_info['spot'][symbol] for symbol in spot_list}, 
-            coinf={symbol:self.symbol_info['coinf'][symbol] for symbol in coinf_list} )
+        elif base is not None and quote is None: 
+            """BASE ONLY"""
+            spot_list = list(filter(lambda x: 
+                self.symbol_info['spot'][x]['base']==base and x in self.symbols['spot'],
+                list(self.symbol_info['spot'].keys())))
+
+            usdf_list = list(filter(lambda x: 
+                self.symbol_info['usdf'][x]['base']==base and x in self.symbols['usdf'],
+                list(self.symbol_info['usdf'].keys())))
+
+            coinf_list = list(filter(lambda x: 
+                self.symbol_info['coinf'][x]['base']==base and x in self.symbols['coinf'],
+                list(self.symbol_info['coinf'].keys())))
+
+        elif base is None and quote is not None: 
+            """QUOTE ONLY"""
+            spot_list = list(filter(lambda x: 
+                self.symbol_info['spot'][x]['quote']==quote and x in self.symbols['spot'],
+                list(self.symbol_info['spot'].keys())))
+
+            usdf_list = list(filter(lambda x: 
+                self.symbol_info['usdf'][x]['quote']==quote and x in self.symbols['usdf'],
+                list(self.symbol_info['usdf'].keys())))
+
+            coinf_list = list(filter(lambda x: 
+                self.symbol_info['coinf'][x]['quote']==quote and x in self.symbols['coinf'],
+                list(self.symbol_info['coinf'].keys())))
+
+        if return_details:
+            return dict(
+                usdf={symbol:self.symbol_info['usdf'][symbol] for symbol in usdf_list}, 
+                spot={symbol:self.symbol_info['spot'][symbol] for symbol in spot_list}, 
+                coinf={symbol:self.symbol_info['coinf'][symbol] for symbol in coinf_list} )
+        else: 
+            return dict(
+                usdf=usdf_list, 
+                spot=spot_list, 
+                coinf=coinf_list)            
 
     def parse_symbols_info(self):
 

@@ -202,7 +202,9 @@ def candles_forwardfill_fn(
             dbs[symbol].delete_last()
             dbs[symbol].insert_multiple(data[symbol])
 
-    pops = list(filter(lambda x: len(data[symbols[x]])<limit, range(len(symbols))))
+    # pops = list(filter(lambda x: len(data[symbols[x]])<limit, range(len(symbols))))
+    pops = list(filter(lambda x: len(data[symbols[x]])<=1, range(len(symbols))))
+
     pops = [symbols[p] for p in pops]
 
     if len(pops)>0: 
@@ -254,7 +256,9 @@ def candles_forwardfill_fn(
             pops = []
             for s in range(len(symbols)):
 
-                if len(data[symbols[s]])<limit:
+                # if len(data[symbols[s]])<limit:
+                if len(data[symbols[s]])<=1:
+                
                     pops.append(symbols[s])
 
             if len(pops)>0: 

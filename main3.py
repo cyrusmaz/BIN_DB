@@ -5,6 +5,7 @@ from db_helpers import *
 from exchange_info_parse_fns import *
 from async_fns import get_infos
 from DB_class_symbols import symbols_db
+from DB_reader import DB_reader
 
 from fill_wrappers import * 
 import argparse
@@ -154,7 +155,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--oi_interval', type=str, required=False, help='not required - default is taken from --params_json')
 
-    parser.add_argument('--nvme1n1', action='store_true', help='not required - default is False')
+    # parser.add_argument('--nvme1n1', action='store_true', help='not required - default is False')
 
     parser.add_argument('--get_all', action='store_true', help='not required - default is False. gets usdf/coinf/spot candles + usdf/coinf oi/mark candles/index candles + usdf/coin_perps funding')
     parser.add_argument('--spot_candles', action='store_true', help='not required - default is False')
@@ -178,6 +179,13 @@ if __name__ == "__main__":
 
     parser.add_argument('--custom_symbols', type=lambda s: [item for item in s.split(',')], help='not required - default is False')
 
+    # parser.add_argument('--base', type=str, help='not required - default is False')
+    # parser.add_argument('--quote', type=str, help='not required - default is False')
+
+    parser.add_argument('--base', type=lambda s: [item for item in s.split(',')], help='not required - default is False')
+    parser.add_argument('--quote', type=lambda s: [item for item in s.split(',')], help='not required - default is False')
+
+
     args = parser.parse_args()
 
     custom_symbols = args.custom_symbols 
@@ -186,7 +194,7 @@ if __name__ == "__main__":
         custom_symbols = args.custom_symbols 
         print(f'custom symbols: {custom_symbols}')
 
-    param_path = '/mnt/nvme1n1/DB/BINANCE/params.json' if args.nvme1n1 else '/home/cm/Documents/PY_DEV/BIN_DB/params.json'
+    param_path = '/home/cm/Documents/PY_DEV/BIN_DB/params.json'
     # param_path = '/home/cm/Documents/PY_DEV/DB_BIN/params.json'
 
     # get parameters
@@ -278,15 +286,31 @@ if __name__ == "__main__":
     # grab last symbol insert from database 
     symbols = db_symbols.get_last()
     # instantiate symbols of interest (spot and usd futs)
+    if args.base is None and args.quote is None: 
+        usdf_symbols_of_interest = symbols['usdf']
+        spot_symbols_of_interest=symbols['spot']
+        coinf_symbols_of_interest=symbols['coinf']
+        coinf_symbols_of_interest_details=symbols['coinf_details']   
+        usdf_symbols_of_interest_details=symbols['usdf_details']          
 
-    usdf_symbols_of_interest = symbols['usdf']
-    spot_symbols_of_interest=symbols['spot']
-    coinf_symbols_of_interest=symbols['coinf']
-    coinf_symbols_of_interest_details=symbols['coinf_details']   
-    usdf_symbols_of_interest_details=symbols['usdf_details']  
+    elif args.base is not None or args.quote is not None: 
+        print(args.base)
+        print(args.quote)
+        input('.........')
+        dbr = DB_reader(param_path=param_path)
+        # symbols_ = dbr.get_relevant_symbols(type_=None, symbol=None, base=args.base, quote=args.quote, return_details=False)
+        symbols_ = dbr.get_relevant_symbols_for_lists(type_=None, symbols=[], bases=args.base, quotes=args.quote)
+        usdf_symbols_of_interest = symbols_['usdf']
+        spot_symbols_of_interest=symbols_['spot']
+        coinf_symbols_of_interest=symbols_['coinf']
+
+        coinf_symbols_of_interest_details = dict(filter(
+            lambda x: x[0] in coinf_symbols_of_interest, dbr.symbols['coinf_details'].items()))
+        usdf_symbols_of_interest_details = dict(filter(
+            lambda x: x[0] in usdf_symbols_of_interest, dbr.symbols['usdf_details'].items()))            
+
 
     coinf_perps = list(filter(lambda s: len(s.split('_PERP'))==2 and s.split('_PERP')[1]=='',  coinf_symbols_of_interest)) 
-    # list(set([s['pair'] for s in coinf_symbols_of_interest_details.values()]))
     coinf_pairs_of_interest = list(set([s['pair'] for s in coinf_symbols_of_interest_details.values()]))
     usdf_pairs_of_interest = list(set([s['pair'] for s in usdf_symbols_of_interest_details.values()]))
 
@@ -331,7 +355,7 @@ if __name__ == "__main__":
 
 
 
-
+    # USDF FUNDING
     if args.usdf_funding or args.get_all: 
         if custom_symbols is not None: usdf_symbols_of_interest=custom_symbols
 
@@ -350,7 +374,7 @@ if __name__ == "__main__":
             usdf=True, coinf=False, 
             logger=logger)        
 
-
+    # COINF FUNDING 
     if args.coinf_funding or args.get_all: 
         if custom_symbols is not None: coinf_perps=custom_symbols
 
