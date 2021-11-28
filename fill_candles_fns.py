@@ -175,7 +175,10 @@ def candles_forwardfill_fn(
         return None
 
     j=0
-    
+
+    interval_len = interval_length_ms(interval)
+    coinf_endtimes_calc = lambda start_times: list(map(lambda x: x+int(interval_len*limit*0.9), start_times))
+
     start_time = datetime.datetime.now()
     current_minute_weight = 0
     total_requests_per_symbol =0 
@@ -189,14 +192,19 @@ def candles_forwardfill_fn(
                 last_candle = dbs[symbol].get_last()
                 startTime = last_candle[0]
                 startTimes_prev.append(startTime)
+                print(f'{symbol} - {long_to_datetime_str(startTime)}')
     else: 
         for symbol in symbols:
             startTime = startTimes_dict[symbol]
             startTimes_prev.append(startTime)     
-   
-    data = asyncio.run(get_candles(**dict(symbols=symbols, interval=interval, limit=limit, startTimes=startTimes_prev, usdf=usdf, coinf=coinf, mark=mark, index=index, logger=logger)))
+            print(f'{symbol} - {long_to_datetime_str(startTime)}')
+    
+    if coinf: endTimes = coinf_endtimes_calc(startTimes_prev)
+    else: endTimes = None
 
-    for symbol in symbols:
+    data = asyncio.run(get_candles(**dict(symbols=symbols, interval=interval, limit=limit, startTimes=startTimes_prev, endTimes=endTimes, usdf=usdf, coinf=coinf, mark=mark, index=index, logger=logger)))
+
+    for symbol in symbols: 
         if len(data[symbol])>0: last_insert_print[symbol]=data[symbol][-1][0]
         if dbs is not None:   
             dbs[symbol].delete_last()
@@ -223,6 +231,7 @@ def candles_forwardfill_fn(
 
         for s in pops: 
             startTimes_prev.pop(symbols.index(s))
+            # if coinf: endTimes.pop()
             if dbs is not None:
                 del dbs[s]
             del symbols[symbols.index(s)]
@@ -286,7 +295,9 @@ def candles_forwardfill_fn(
         if len(symbols)==0:
             break
 
-        data = asyncio.run(get_candles(**dict(symbols=symbols, interval=interval, limit=limit, startTimes=startTimes, usdf=usdf, coinf=coinf, mark=mark, index=index, logger=logger)))
+        if coinf: endTimes = coinf_endtimes_calc(startTimes)
+        else: endTimes = None
+        data = asyncio.run(get_candles(**dict(symbols=symbols, interval=interval, limit=limit, startTimes=startTimes, endTimes=endTimes, usdf=usdf, coinf=coinf, mark=mark, index=index, logger=logger)))
 
         total_requests_per_symbol += 1
         current_minute_weight += len(symbols)

@@ -146,14 +146,20 @@ def candle_grab_fn(
             logger=logger,
             backfill=None)
 
+
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Binance Database Update Commandline Tool')
 
     parser.add_argument('--update_symbols', action='store_true', help='not required - default is False')
 
-    parser.add_argument('--candle_interval', type=str, required=False, help='not required - default is taken from --params_json')
+    # parser.add_argument('--candle_interval', type=str, required=False, help='not required - default is taken from --params_json')
+    # parser.add_argument('--oi_interval', type=str, required=False, help='not required - default is taken from --params_json')
 
-    parser.add_argument('--oi_interval', type=str, required=False, help='not required - default is taken from --params_json')
+
+    parser.add_argument('--candle_interval', type=lambda s: [item for item in s.split(',')], help='not required - default is False')
+    parser.add_argument('--oi_interval', type=lambda s: [item for item in s.split(',')], help='not required - default is False')
 
     # parser.add_argument('--nvme1n1', action='store_true', help='not required - default is False')
 
@@ -187,12 +193,44 @@ if __name__ == "__main__":
 
 
     args = parser.parse_args()
+    if args.get_all: 
+        args.update_symbols = True
+        args.check_existence = True
+        args.usdf_oi = True
+        args.coinf_oi = True
+        args.usdf_funding = True
+        args.coinf_funding = True
+        args.spot_candles = True
+        args.usdf_candles = True
+        args.coinf_candles = True
+        args.usdf_mark  = True
+        args.usdf_index = True
+        args.coinf_mark = True
+        args.coinf_index = True
+        args.forward = True
+        args.backward = 'dne'
 
-    custom_symbols = args.custom_symbols 
-    if custom_symbols is not None: 
-        print('here')
-        custom_symbols = args.custom_symbols 
-        print(f'custom symbols: {custom_symbols}')
+    check_existence = args.check_existence
+    usdf_oi = args.usdf_oi
+    coinf_oi = args.coinf_oi
+    usdf_funding = args.usdf_funding
+    coinf_funding = args.coinf_funding
+    spot_candles = args.spot_candles
+    usdf_candles = args.usdf_candles
+    coinf_candles = args.coinf_candles
+    usdf_mark  = args.usdf_mark 
+    usdf_index = args.usdf_index
+    coinf_mark = args.coinf_mark
+    coinf_index = args.coinf_index
+    forward = args.forward
+    backward = args.backward
+    
+
+    
+
+
+
+
 
     param_path = '/home/cm/Documents/PY_DEV/BIN_DB/params.json'
     # param_path = '/home/cm/Documents/PY_DEV/DB_BIN/params.json'
@@ -208,8 +246,8 @@ if __name__ == "__main__":
     # set up logger
     logger = logger_setup(LOG_DIR=log_dir)
     # extract candle and oi intervals
-    candle_interval = db_parameters['CANDLE_INTERVAL'] if args.candle_interval is None else args.candle_interval
-    oi_interval = db_parameters['OI_INTERVAL'] if args.oi_interval is None else args.oi_interval
+    candle_interval_ = db_parameters['CANDLE_INTERVAL'] if args.candle_interval is None else args.candle_interval
+    oi_interval_ = db_parameters['OI_INTERVAL'] if args.oi_interval is None else args.oi_interval
 
 
     if args.get_all:
@@ -224,8 +262,8 @@ if __name__ == "__main__":
     print(f'forward: {args.forward}')
     print(f'backward: {args.backward}')
 
-    print(f'candle_interval={candle_interval}')
-    print(f'oi_interval={oi_interval}')        
+    print(f'candle_interval={candle_interval_}')
+    print(f'oi_interval={oi_interval_}')        
     input('press key to begin')                                        
 
     ## BUILD DB PATHS:
@@ -276,7 +314,7 @@ if __name__ == "__main__":
     db_symbols=symbols_db(DB_DIRECTORY=symbols_dir,DB_NAME='symbols.db',EXCHANGE=exchange, LOGGER=logger)
 
     # grab symbols from exchange and update the db
-    if args.update_symbols or args.get_all: 
+    if args.update_symbols: 
         exchange_infos_dict = asyncio.run(get_infos(types=exchange_types, logger=logger))
         new_symbols_dict = get_symbols(exchange_infos=exchange_infos_dict, logger=logger)
         # raw_exchange_infos =db_symbols.get_last(raw_dump=True)
@@ -285,18 +323,38 @@ if __name__ == "__main__":
 
     # grab last symbol insert from database 
     symbols = db_symbols.get_last()
+
+
+
+    custom_symbols = args.custom_symbols 
+    if custom_symbols is not None: 
+        custom_symbols = args.custom_symbols 
+        print(f'custom symbols: {custom_symbols}')
+
+    if custom_symbols is not None:
+        spot_symbols_of_interest=custom_symbols
+        usdf_symbols_of_interest=custom_symbols
+        coinf_symbols_of_interest=custom_symbols
+        usdf_symbols_of_interest=custom_symbols
+        coinf_symbols_of_interest=custom_symbols
+        usdf_pairs_of_interest=custom_symbols
+        coinf_pairs_of_interest=custom_symbols
+        usdf_symbols_of_interest=custom_symbols
+        coinf_perps=custom_symbols
+        usdf_symbols_of_interest=custom_symbols
+        coinf_symbols_of_interest=custom_symbols
+
     # instantiate symbols of interest (spot and usd futs)
-    if args.base is None and args.quote is None: 
+    elif args.base is None and args.quote is None: 
         usdf_symbols_of_interest = symbols['usdf']
         spot_symbols_of_interest=symbols['spot']
+        # print(spot_symbols_of_interest)
+        # input('........')
         coinf_symbols_of_interest=symbols['coinf']
         coinf_symbols_of_interest_details=symbols['coinf_details']   
         usdf_symbols_of_interest_details=symbols['usdf_details']          
 
     elif args.base is not None or args.quote is not None: 
-        print(args.base)
-        print(args.quote)
-        input('.........')
         dbr = DB_reader(param_path=param_path)
         # symbols_ = dbr.get_relevant_symbols(type_=None, symbol=None, base=args.base, quote=args.quote, return_details=False)
         symbols_ = dbr.get_relevant_symbols_for_lists(type_=None, symbols=[], bases=args.base, quotes=args.quote)
@@ -314,225 +372,236 @@ if __name__ == "__main__":
     coinf_pairs_of_interest = list(set([s['pair'] for s in coinf_symbols_of_interest_details.values()]))
     usdf_pairs_of_interest = list(set([s['pair'] for s in usdf_symbols_of_interest_details.values()]))
 
-    # USDF OI
-    if args.usdf_oi or args.get_all: 
-        if custom_symbols is not None: usdf_symbols_of_interest=custom_symbols
-
-        oi_grab_fn(
-            dir_=usdf_oi_dir,
-            symbols=usdf_symbols_of_interest, 
-            usdf=True, 
-            coinf=False,    
-            check_existence=args.check_existence, 
-            forward=args.forward,
-            backward=args.backward,   
-            oi_interval=oi_interval,
-            limit=USDF_OI_LIMIT,
-            rate_limit=USDF_OI_RATE_LIMIT,                   
-            db_args_dict=dict(TYPE='usdf_oi', EXCHANGE=exchange),
-            logger=logger,)
-
-
-    # COINF OI
-    if args.coinf_oi or args.get_all: 
-        if custom_symbols is not None: coinf_symbols_of_interest=custom_symbols
-
-        oi_grab_fn(
-            dir_=coinf_oi_dir,
-            symbols=coinf_symbols_of_interest, 
-            usdf=False, 
-            coinf=True,    
-            check_existence=args.check_existence, 
-            forward=args.forward,
-            backward=args.backward,   
-            oi_interval=oi_interval,
-            limit=COINF_OI_LIMIT,
-            rate_limit=COINF_OI_RATE_LIMIT,                   
-            db_args_dict=dict(TYPE='coinf_oi', EXCHANGE=exchange),
-            logger=logger,
-            coinf_details=coinf_symbols_of_interest_details)
 
 
 
+    def wrapper_oi_grab_fn(oi_interval):
+        # USDF OI
+        if usdf_oi: 
+            oi_grab_fn(
+                dir_=usdf_oi_dir,
+                symbols=usdf_symbols_of_interest, 
+                usdf=True, 
+                coinf=False,    
+                check_existence=check_existence, 
+                forward=forward,
+                backward=backward,   
+                oi_interval=oi_interval,
+                limit=USDF_OI_LIMIT,
+                rate_limit=USDF_OI_RATE_LIMIT,                   
+                db_args_dict=dict(TYPE='usdf_oi', EXCHANGE=exchange),
+                logger=logger,)
 
-    # USDF FUNDING
-    if args.usdf_funding or args.get_all: 
-        if custom_symbols is not None: usdf_symbols_of_interest=custom_symbols
+        # COINF OI
+        if coinf_oi: 
+            oi_grab_fn(
+                dir_=coinf_oi_dir,
+                symbols=coinf_symbols_of_interest, 
+                usdf=False, 
+                coinf=True,    
+                check_existence=check_existence, 
+                forward=forward,
+                backward=backward,   
+                oi_interval=oi_interval,
+                limit=COINF_OI_LIMIT,
+                rate_limit=COINF_OI_RATE_LIMIT,                   
+                db_args_dict=dict(TYPE='coinf_oi', EXCHANGE=exchange),
+                logger=logger,
+                coinf_details=coinf_symbols_of_interest_details)
 
-        symbols, dbs_funding = prepare_for_funding_fetch(
-            dir_=usdf_funding_dir, 
-            symbols=usdf_symbols_of_interest, 
-            usdf=True, coinf=False, 
-            db_args_dict=dict(TYPE='usdf_funding', EXCHANGE=exchange))
+    def wrapper_funding_grab_fn():
+        # USDF FUNDING
+        if usdf_funding: 
 
-        funding_fill_wrapper(
-            symbols=symbols, 
-            dbs=dbs_funding, 
-            batch_size=USDF_FUNDING_RATE_LIMIT/4, 
-            limit=USDF_FUNDING_LIMIT,
-            rate_limit=USDF_FUNDING_RATE_LIMIT,              
-            usdf=True, coinf=False, 
-            logger=logger)        
+            symbols, dbs_funding = prepare_for_funding_fetch(
+                dir_=usdf_funding_dir, 
+                symbols=usdf_symbols_of_interest, 
+                usdf=True, coinf=False, 
+                db_args_dict=dict(TYPE='usdf_funding', EXCHANGE=exchange))
 
-    # COINF FUNDING 
-    if args.coinf_funding or args.get_all: 
-        if custom_symbols is not None: coinf_perps=custom_symbols
+            funding_fill_wrapper(
+                symbols=symbols, 
+                dbs=dbs_funding, 
+                batch_size=USDF_FUNDING_RATE_LIMIT/4, 
+                limit=USDF_FUNDING_LIMIT,
+                rate_limit=USDF_FUNDING_RATE_LIMIT,              
+                usdf=True, coinf=False, 
+                logger=logger)        
 
-        symbols, dbs_funding = prepare_for_funding_fetch(
-            dir_=coinf_funding_dir, 
-            symbols=coinf_perps, 
-            usdf=False, coinf=True, 
-            db_args_dict=dict(TYPE='coinf_funding', EXCHANGE=exchange))
+        # COINF FUNDING 
+        if coinf_funding: 
+            symbols, dbs_funding = prepare_for_funding_fetch(
+                dir_=coinf_funding_dir, 
+                symbols=coinf_perps, 
+                usdf=False, coinf=True, 
+                db_args_dict=dict(TYPE='coinf_funding', EXCHANGE=exchange))
 
-        funding_fill_wrapper(
-            symbols=symbols, 
-            dbs=dbs_funding, 
-            batch_size=COINF_FUNDING_RATE_LIMIT/4,
-            limit=COINF_FUNDING_LIMIT,
-            rate_limit=COINF_FUNDING_RATE_LIMIT,  
-            usdf=False, coinf=True, 
-            logger=logger)        
+            funding_fill_wrapper(
+                symbols=symbols, 
+                dbs=dbs_funding, 
+                batch_size=COINF_FUNDING_RATE_LIMIT/4,
+                limit=COINF_FUNDING_LIMIT,
+                rate_limit=COINF_FUNDING_RATE_LIMIT,  
+                usdf=False, coinf=True, 
+                logger=logger)        
 
+    def wrapper_candle_grab_fn(candle_interval):
 
+        # SPOT CANDLES
+        if spot_candles: 
 
-    # SPOT CANDLES
-    if args.spot_candles or args.get_all: 
-        if custom_symbols is not None: spot_symbols_of_interest=custom_symbols
+            candle_grab_fn(
+                dir_=spot_candles_dir, 
+                backward=backward, 
+                forward=forward, 
+                db_args_dict=dict(TYPE='spot_candles', EXCHANGE=exchange), 
+                check_existence=check_existence, 
+                usdf=False, 
+                coinf=False, 
+                mark=False, 
+                index=False, 
+                limit = SPOT_CANDLE_LIMIT,
+                rate_limit = SPOT_CANDLE_RATE_LIMIT,
+                logger=logger, 
+                candle_interval=candle_interval, 
+                symbols=spot_symbols_of_interest)
 
-        candle_grab_fn(
-            dir_=spot_candles_dir, 
-            backward=args.backward, 
-            forward=args.forward, 
-            db_args_dict=dict(TYPE='spot_candles', EXCHANGE=exchange), 
-            check_existence=args.check_existence, 
-            usdf=False, 
-            coinf=False, 
-            mark=False, 
-            index=False, 
-            limit = SPOT_CANDLE_LIMIT,
-            rate_limit = SPOT_CANDLE_RATE_LIMIT,
-            logger=logger, 
-            candle_interval=candle_interval, 
-            symbols=spot_symbols_of_interest)
-
-    # USDF CANDLES
-    if args.usdf_candles or args.get_all: 
-        if custom_symbols is not None: usdf_symbols_of_interest=custom_symbols
-
-        candle_grab_fn(
-            dir_=usdf_candles_dir, 
-            backward=args.backward, 
-            forward=args.forward, 
-            db_args_dict=dict(TYPE='usdf_candles', EXCHANGE=exchange), 
-            check_existence=args.check_existence, 
-            usdf=True, 
-            coinf=False, 
-            mark=False, 
-            index=False, 
-            limit = USDF_CANDLE_LIMIT,
-            rate_limit = USDF_CANDLE_RATE_LIMIT,          
-            logger=logger, 
-            candle_interval=candle_interval, 
-            symbols=usdf_symbols_of_interest)
-
-
-    # COINF CANDLES
-    if args.coinf_candles or args.get_all: 
-        if custom_symbols is not None: coinf_symbols_of_interest=custom_symbols
-
-        candle_grab_fn(
-            dir_=coinf_candles_dir, 
-            backward=args.backward, 
-            forward=args.forward, 
-            db_args_dict=dict(TYPE='coinf_candles', EXCHANGE=exchange), 
-            check_existence=args.check_existence, 
-            usdf=False, 
-            coinf=True, 
-            mark=False, 
-            index=False, 
-            limit = COINF_CANDLE_LIMIT,
-            rate_limit = COINF_CANDLE_RATE_LIMIT,          
-            logger=logger, 
-            candle_interval=candle_interval, 
-            symbols=coinf_symbols_of_interest)            
-
-    # USDF MARK
-    if args.usdf_mark or args.get_all: 
-        if custom_symbols is not None: usdf_symbols_of_interest=custom_symbols
-
-        candle_grab_fn(
-            dir_=usdf_mark_candles_dir, 
-            backward=args.backward, 
-            forward=args.forward, 
-            db_args_dict=dict(TYPE='usdf_mark', EXCHANGE=exchange), 
-            check_existence=args.check_existence, 
-            usdf=True, 
-            coinf=False, 
-            mark=True, 
-            index=False, 
-            limit = USDF_CANDLE_LIMIT,
-            rate_limit = USDF_CANDLE_RATE_LIMIT,              
-            logger=logger, 
-            candle_interval=candle_interval, 
-            symbols=usdf_symbols_of_interest)
+        # USDF CANDLES
+        if usdf_candles: 
 
 
-    # COINF MARK
-    if args.coinf_mark or args.get_all: 
-        if custom_symbols is not None: coinf_symbols_of_interest=custom_symbols
+            candle_grab_fn(
+                dir_=usdf_candles_dir, 
+                backward=backward, 
+                forward=forward, 
+                db_args_dict=dict(TYPE='usdf_candles', EXCHANGE=exchange), 
+                check_existence=check_existence, 
+                usdf=True, 
+                coinf=False, 
+                mark=False, 
+                index=False, 
+                limit = USDF_CANDLE_LIMIT,
+                rate_limit = USDF_CANDLE_RATE_LIMIT,          
+                logger=logger, 
+                candle_interval=candle_interval, 
+                symbols=usdf_symbols_of_interest)
 
-        candle_grab_fn(
-            dir_=coinf_mark_candles_dir, 
-            backward=args.backward, 
-            forward=args.forward, 
-            db_args_dict=dict(TYPE='coinf_mark', EXCHANGE=exchange), 
-            check_existence=args.check_existence, 
-            usdf=False, 
-            coinf=True, 
-            mark=True, 
-            index=False, 
-            limit = COINF_CANDLE_LIMIT,
-            rate_limit = COINF_CANDLE_RATE_LIMIT,              
-            logger=logger, 
-            candle_interval=candle_interval, 
-            symbols=coinf_symbols_of_interest)
+        # COINF CANDLES
+        if coinf_candles: 
 
-    # USDF INDEX 
-    if args.usdf_index or args.get_all: 
-        if custom_symbols is not None: usdf_pairs_of_interest=custom_symbols
 
-        candle_grab_fn(
-            dir_=usdf_index_candles_dir, 
-            backward=args.backward, 
-            forward=args.forward, 
-            db_args_dict=dict(TYPE='usdf_index', EXCHANGE=exchange), 
-            check_existence=args.check_existence, 
-            usdf=True, 
-            coinf=False, 
-            mark=False, 
-            index=True, 
-            limit = USDF_CANDLE_LIMIT,
-            rate_limit = USDF_CANDLE_RATE_LIMIT,              
-            logger=logger, 
-            candle_interval=candle_interval, 
-            symbols=usdf_pairs_of_interest)
 
-    # COINF INDEX
-    if args.coinf_index or args.get_all: 
-        if custom_symbols is not None: coinf_pairs_of_interest=custom_symbols
 
-        candle_grab_fn(
-            dir_=coinf_index_candles_dir, 
-            backward=args.backward, 
-            forward=args.forward, 
-            db_args_dict=dict(TYPE='coinf_index', EXCHANGE=exchange),
-            check_existence=args.check_existence, 
-            usdf=False, 
-            coinf=True, 
-            mark=False, 
-            index=True, 
-            limit = COINF_CANDLE_LIMIT,
-            rate_limit = COINF_CANDLE_RATE_LIMIT,              
-            logger=logger, 
-            candle_interval=candle_interval, 
-            symbols=coinf_pairs_of_interest)
+
+
+            candle_grab_fn(
+                dir_=coinf_candles_dir, 
+                backward=backward, 
+                forward=forward, 
+                db_args_dict=dict(TYPE='coinf_candles', EXCHANGE=exchange), 
+                check_existence=check_existence, 
+                usdf=False, 
+                coinf=True, 
+                mark=False, 
+                index=False, 
+                limit = COINF_CANDLE_LIMIT,
+                rate_limit = COINF_CANDLE_RATE_LIMIT,          
+                logger=logger, 
+                candle_interval=candle_interval, 
+                symbols=coinf_symbols_of_interest)            
+
+        # USDF MARK
+        if usdf_mark: 
+
+            candle_grab_fn(
+                dir_=usdf_mark_candles_dir, 
+                backward=backward, 
+                forward=forward, 
+                db_args_dict=dict(TYPE='usdf_mark', EXCHANGE=exchange), 
+                check_existence=check_existence, 
+                usdf=True, 
+                coinf=False, 
+                mark=True, 
+                index=False, 
+                limit = USDF_CANDLE_LIMIT,
+                rate_limit = USDF_CANDLE_RATE_LIMIT,              
+                logger=logger, 
+                candle_interval=candle_interval, 
+                symbols=usdf_symbols_of_interest)
+
+
+        # COINF MARK
+        if coinf_mark: 
+
+            candle_grab_fn(
+                dir_=coinf_mark_candles_dir, 
+                backward=backward, 
+                forward=forward, 
+                db_args_dict=dict(TYPE='coinf_mark', EXCHANGE=exchange), 
+                check_existence=check_existence, 
+                usdf=False, 
+                coinf=True, 
+                mark=True, 
+                index=False, 
+                limit = COINF_CANDLE_LIMIT,
+                rate_limit = COINF_CANDLE_RATE_LIMIT,              
+                logger=logger, 
+                candle_interval=candle_interval, 
+                symbols=coinf_symbols_of_interest)
+
+        # USDF INDEX 
+        if usdf_index: 
+
+            candle_grab_fn(
+                dir_=usdf_index_candles_dir, 
+                backward=backward, 
+                forward=forward, 
+                db_args_dict=dict(TYPE='usdf_index', EXCHANGE=exchange), 
+                check_existence=check_existence, 
+                usdf=True, 
+                coinf=False, 
+                mark=False, 
+                index=True, 
+                limit = USDF_CANDLE_LIMIT,
+                rate_limit = USDF_CANDLE_RATE_LIMIT,              
+                logger=logger, 
+                candle_interval=candle_interval, 
+                symbols=usdf_pairs_of_interest)
+
+        # COINF INDEX
+        if coinf_index: 
+
+            candle_grab_fn(
+                dir_=coinf_index_candles_dir, 
+                backward=backward, 
+                forward=forward, 
+                db_args_dict=dict(TYPE='coinf_index', EXCHANGE=exchange),
+                check_existence=args.check_existence, 
+                usdf=False, 
+                coinf=True, 
+                mark=False, 
+                index=True, 
+                limit = COINF_CANDLE_LIMIT,
+                rate_limit = COINF_CANDLE_RATE_LIMIT,              
+                logger=logger, 
+                candle_interval=candle_interval, 
+                symbols=coinf_pairs_of_interest)
+
+
+
+
+
+
+
+
+
+
+    ##############################################
+    for candle_interval in candle_interval_:
+        wrapper_candle_grab_fn(candle_interval)
+
+    for oi_inteval in oi_interval_:
+        wrapper_oi_grab_fn(oi_inteval)
+
+    wrapper_funding_grab_fn()
+

@@ -26,7 +26,6 @@ async def get_candles_worker(symbol, interval, limit, startTime=None, endTime=No
             klines_endpoint = 'https://dapi.binance.com/dapi/v1/markPriceKlines?symbol={}&interval={}&limit={}'        
 
     url = klines_endpoint.format(symbol, interval, limit)
-    # print(url)
     if startTime is not None: 
         url = url + '&startTime={}'.format(startTime)
     if endTime is not None: 
@@ -37,6 +36,7 @@ async def get_candles_worker(symbol, interval, limit, startTime=None, endTime=No
     #         resp = await resp.json(loads=json.loads)
     #         output[symbol]=resp
     # return output
+    print(url)
 
     try: 
         async with aiohttp.ClientSession(json_serialize=json.dumps) as session:

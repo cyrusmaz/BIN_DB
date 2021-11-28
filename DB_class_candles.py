@@ -50,7 +50,8 @@ class candle_db():
         if len(row)==0:
             # print('not enough entries ')
             return None
-
+        # output = json.loads(row[0][0])
+        print(row[0])
         return json.loads(row[0][0])
 
 

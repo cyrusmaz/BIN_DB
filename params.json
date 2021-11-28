@@ -5,10 +5,9 @@
       "coinf",
       "spot"
    ],
-   "DB_DIRECTORY": "/home/cm/Documents/PY_DEV/DB/BINANCE/",
-   "UPDATE_INTERVAL": 5,
-   "CANDLE_INTERVAL": "5m",
-   "OI_INTERVAL": "5m",
+   "DB_DIRECTORY": "/home/cm/Documents/PY_DEV/DB/BINANCE2/",
+   "CANDLE_INTERVAL": ["5m"],
+   "OI_INTERVAL": ["5m"],
    "SPOT_CANDLE_QUOTES": [
       "USDT",
       "BTC",
@@ -32,7 +31,5 @@
    "COINF_OI_RATE_LIMIT": 6000,
    "COINF_FUNDING_LIMIT": 1000,
    "COINF_FUNDING_RATE_LIMIT": 6000
-   
-   
    
 }
