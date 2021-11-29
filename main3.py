@@ -154,14 +154,8 @@ if __name__ == "__main__":
 
     parser.add_argument('--update_symbols', action='store_true', help='not required - default is False')
 
-    # parser.add_argument('--candle_interval', type=str, required=False, help='not required - default is taken from --params_json')
-    # parser.add_argument('--oi_interval', type=str, required=False, help='not required - default is taken from --params_json')
-
-
     parser.add_argument('--candle_interval', type=lambda s: [item for item in s.split(',')], help='not required - default is False')
     parser.add_argument('--oi_interval', type=lambda s: [item for item in s.split(',')], help='not required - default is False')
-
-    # parser.add_argument('--nvme1n1', action='store_true', help='not required - default is False')
 
     parser.add_argument('--get_all', action='store_true', help='not required - default is False. gets usdf/coinf/spot candles + usdf/coinf oi/mark candles/index candles + usdf/coin_perps funding')
     parser.add_argument('--spot_candles', action='store_true', help='not required - default is False')
@@ -184,9 +178,6 @@ if __name__ == "__main__":
     parser.add_argument('--backward', type=str, help='one of: exists (or exist), dne, all. either --forward or --backward (or both) must be used')
 
     parser.add_argument('--custom_symbols', type=lambda s: [item for item in s.split(',')], help='not required - default is False')
-
-    # parser.add_argument('--base', type=str, help='not required - default is False')
-    # parser.add_argument('--quote', type=str, help='not required - default is False')
 
     parser.add_argument('--base', type=lambda s: [item for item in s.split(',')], help='not required - default is False')
     parser.add_argument('--quote', type=lambda s: [item for item in s.split(',')], help='not required - default is False')
@@ -449,7 +440,6 @@ if __name__ == "__main__":
 
         # SPOT CANDLES
         if spot_candles: 
-
             candle_grab_fn(
                 dir_=spot_candles_dir, 
                 backward=backward, 
@@ -468,8 +458,6 @@ if __name__ == "__main__":
 
         # USDF CANDLES
         if usdf_candles: 
-
-
             candle_grab_fn(
                 dir_=usdf_candles_dir, 
                 backward=backward, 
@@ -488,12 +476,6 @@ if __name__ == "__main__":
 
         # COINF CANDLES
         if coinf_candles: 
-
-
-
-
-
-
             candle_grab_fn(
                 dir_=coinf_candles_dir, 
                 backward=backward, 
@@ -512,7 +494,6 @@ if __name__ == "__main__":
 
         # USDF MARK
         if usdf_mark: 
-
             candle_grab_fn(
                 dir_=usdf_mark_candles_dir, 
                 backward=backward, 
@@ -529,10 +510,8 @@ if __name__ == "__main__":
                 candle_interval=candle_interval, 
                 symbols=usdf_symbols_of_interest)
 
-
         # COINF MARK
         if coinf_mark: 
-
             candle_grab_fn(
                 dir_=coinf_mark_candles_dir, 
                 backward=backward, 
@@ -551,7 +530,6 @@ if __name__ == "__main__":
 
         # USDF INDEX 
         if usdf_index: 
-
             candle_grab_fn(
                 dir_=usdf_index_candles_dir, 
                 backward=backward, 
@@ -570,7 +548,6 @@ if __name__ == "__main__":
 
         # COINF INDEX
         if coinf_index: 
-
             candle_grab_fn(
                 dir_=coinf_index_candles_dir, 
                 backward=backward, 

@@ -36,7 +36,7 @@ async def get_candles_worker(symbol, interval, limit, startTime=None, endTime=No
     #         resp = await resp.json(loads=json.loads)
     #         output[symbol]=resp
     # return output
-    print(url)
+    # print(url)
 
     try: 
         async with aiohttp.ClientSession(json_serialize=json.dumps) as session:
@@ -156,7 +156,7 @@ async def get_futs_stat_worker(
         url = url + '&endTime={}'.format(endTime)        
     output = {}
     try: 
-        print(url)
+        # print(url)
         async with aiohttp.ClientSession(json_serialize=json.dumps) as session:
             async with session.get(url) as resp:
                 # print(url)

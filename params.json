@@ -5,9 +5,9 @@
       "coinf",
       "spot"
    ],
-   "DB_DIRECTORY": "/home/cm/Documents/PY_DEV/DB/BINANCE2/",
-   "CANDLE_INTERVAL": ["5m"],
-   "OI_INTERVAL": ["5m"],
+   "DB_DIRECTORY": "/home/cm/Documents/PY_DEV/DB/BINANCE/",
+   "CANDLE_INTERVAL": ["5m" ,"1h", "4h"], 
+   "OI_INTERVAL": ["5m" ,"1h", "4h"],
    "SPOT_CANDLE_QUOTES": [
       "USDT",
       "BTC",
