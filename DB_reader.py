@@ -130,6 +130,28 @@ class DB_reader():
                 self.symbol_info['coinf'][x]['base']==base and x in self.symbols['coinf'],
                 list(self.symbol_info['coinf'].keys())))
 
+            #### BASE USDF PERP
+            usdf_perp_list = list(filter(lambda x: 
+                self.symbol_info['usdf'][x]['base']==base and x in self.symbols['usdf'] and self.symbol_info['usdf'][x]['contract_type']=='PERPETUAL',
+                list(self.symbol_info['usdf'].keys())))
+
+            #### BASE USDF NON-PERP
+            usdf_non_perp_list = list(filter(lambda x: 
+                self.symbol_info['usdf'][x]['base']==base and x in self.symbols['usdf'] and self.symbol_info['usdf'][x]['contract_type']!='PERPETUAL',
+                list(self.symbol_info['usdf'].keys())))
+
+
+
+            #### BASE COINF PERP
+            coinf_perp_list = list(filter(lambda x: 
+                self.symbol_info['coinf'][x]['base']==base and x in self.symbols['coinf'] and self.symbol_info['coinf'][x]['contract_type']=='PERPETUAL',
+                list(self.symbol_info['coinf'].keys())))
+
+            #### BASE COINF NON-PERP
+            coinf_non_perp_list = list(filter(lambda x: 
+                self.symbol_info['coinf'][x]['base']==base and x in self.symbols['coinf'] and self.symbol_info['coinf'][x]['contract_type']!='PERPETUAL',
+                list(self.symbol_info['coinf'].keys())))                
+
         elif base is not None and quote is None: 
             """BASE ONLY"""
             spot_list = list(filter(lambda x: 
@@ -143,6 +165,29 @@ class DB_reader():
             coinf_list = list(filter(lambda x: 
                 self.symbol_info['coinf'][x]['base']==base and x in self.symbols['coinf'],
                 list(self.symbol_info['coinf'].keys())))
+
+            #### BASE USDF PERP
+            usdf_perp_list = list(filter(lambda x: 
+                self.symbol_info['usdf'][x]['base']==base and x in self.symbols['usdf'] and self.symbol_info['usdf'][x]['contract_type']=='PERPETUAL',
+                list(self.symbol_info['usdf'].keys())))
+
+            #### BASE USDF NON-PERP
+            usdf_non_perp_list = list(filter(lambda x: 
+                self.symbol_info['usdf'][x]['base']==base and x in self.symbols['usdf'] and self.symbol_info['usdf'][x]['contract_type']!='PERPETUAL',
+                list(self.symbol_info['usdf'].keys())))
+
+            #### BASE COINF PERP
+            coinf_perp_list = list(filter(lambda x: 
+                self.symbol_info['coinf'][x]['base']==base and x in self.symbols['coinf'] and self.symbol_info['coinf'][x]['contract_type']=='PERPETUAL',
+                list(self.symbol_info['coinf'].keys())))
+
+            #### BASE COINF NON-PERP
+            coinf_non_perp_list = list(filter(lambda x: 
+                self.symbol_info['coinf'][x]['base']==base and x in self.symbols['coinf'] and self.symbol_info['coinf'][x]['contract_type']!='PERPETUAL',
+                list(self.symbol_info['coinf'].keys())))
+
+
+
 
         elif base is None and quote is not None: 
             """QUOTE ONLY"""
@@ -158,16 +203,47 @@ class DB_reader():
                 self.symbol_info['coinf'][x]['quote']==quote and x in self.symbols['coinf'],
                 list(self.symbol_info['coinf'].keys())))
 
+            #### QUOTE USDF PERP
+            usdf_perp_list = list(filter(lambda x: 
+                self.symbol_info['usdf'][x]['quote']==quote and x in self.symbols['usdf'] and self.symbol_info['usdf'][x]['contract_type']=='PERPETUAL',
+                list(self.symbol_info['usdf'].keys())))
+
+            #### QUOTE USDF NON-PERP
+            usdf_non_perp_list = list(filter(lambda x: 
+                self.symbol_info['usdf'][x]['quote']==quote and x in self.symbols['usdf'] and self.symbol_info['usdf'][x]['contract_type']!='PERPETUAL',
+                list(self.symbol_info['usdf'].keys())))
+
+            #### QUOTE COINF PERP
+            coinf_perp_list = list(filter(lambda x: 
+                self.symbol_info['coinf'][x]['quote']==quote and x in self.symbols['coinf'] and self.symbol_info['coinf'][x]['contract_type']=='PERPETUAL',
+                list(self.symbol_info['coinf'].keys())))
+
+            #### QUOTE COINF NON-PERP
+            coinf_non_perp_list = list(filter(lambda x: 
+                self.symbol_info['coinf'][x]['quote']==quote and x in self.symbols['coinf'] and self.symbol_info['coinf'][x]['contract_type']!='PERPETUAL',
+                list(self.symbol_info['coinf'].keys())))                
+
+                
+
         if return_details:
             return dict(
                 usdf={symbol:self.symbol_info['usdf'][symbol] for symbol in usdf_list}, 
                 spot={symbol:self.symbol_info['spot'][symbol] for symbol in spot_list}, 
-                coinf={symbol:self.symbol_info['coinf'][symbol] for symbol in coinf_list} )
+                coinf={symbol:self.symbol_info['coinf'][symbol] for symbol in coinf_list},
+                usdf_perp=usdf_perp_list,
+                usdf_non_perp = usdf_non_perp_list,
+                coinf_perp = coinf_perp_list,
+                coinf_non_perp = coinf_non_perp_list )
         else: 
             return dict(
                 usdf=usdf_list, 
                 spot=spot_list, 
-                coinf=coinf_list)            
+                coinf=coinf_list,
+                
+                usdf_perp=usdf_perp_list,
+                usdf_non_perp = usdf_non_perp_list,
+                coinf_perp = coinf_perp_list,
+                coinf_non_perp = coinf_non_perp_list                 )            
 
     def parse_symbols_info(self):
         ######################### USDF FUTS
