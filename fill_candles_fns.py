@@ -177,7 +177,8 @@ def candles_forwardfill_fn(
     j=0
 
     interval_len = interval_length_ms(interval)
-    coinf_endtimes_calc = lambda start_times: list(map(lambda x: x+int(interval_len*limit*0.9), start_times))
+    utc_long_now = int(time.time())*1000
+    coinf_endtimes_calc = lambda start_times: list(map(lambda x: min(x+int(interval_len*limit*0.9),utc_long_now), start_times))
 
     start_time = datetime.datetime.now()
     current_minute_weight = 0

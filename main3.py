@@ -16,7 +16,8 @@ def oi_grab_fn(
     dir_, backward, forward, db_args_dict, 
     check_existence, usdf, coinf, 
     logger, oi_interval, symbols, limit, 
-    rate_limit, coinf_details=None):
+    rate_limit, coinf_details=None,
+    skip_sleep=False):
 
     symbols_exist, startTimes_dict, symbols_dne = prepare_for_oi_fetch(
         dir_=dir_, 
@@ -41,7 +42,8 @@ def oi_grab_fn(
             rate_limit=rate_limit,                
             logger=logger,
             db_args_dict=db_args_dict,
-            coinf_details=coinf_details)            
+            coinf_details=coinf_details,
+            skip_sleep=skip_sleep)            
 
     if backward=='exists' or backward=='exist' or backward=='all': 
         oi_fill_wrapper(
@@ -57,7 +59,8 @@ def oi_grab_fn(
             rate_limit=rate_limit,                
             logger=logger,
             db_args_dict=db_args_dict,
-            coinf_details=coinf_details)    
+            coinf_details=coinf_details,
+            skip_sleep=skip_sleep)    
 
     if backward=='dne' or backward=='all': 
         oi_fill_wrapper(
@@ -73,13 +76,15 @@ def oi_grab_fn(
             rate_limit=rate_limit,                
             logger=logger,
             db_args_dict=db_args_dict,
-            coinf_details=coinf_details)  
+            coinf_details=coinf_details,
+            skip_sleep=skip_sleep)  
 
 def candle_grab_fn(
     dir_, backward, forward, db_args_dict, 
     check_existence, usdf, coinf, 
     mark, index, logger, candle_interval, 
-    symbols, limit, rate_limit):
+    symbols, limit, rate_limit,
+    skip_sleep=False):
     symbols_exist, startTimes_dict, symbols_dne  = prepare_for_candle_fetch(
         dir_=dir_, 
         symbols=symbols, 
@@ -108,7 +113,8 @@ def candle_grab_fn(
             dir_=dir_, 
             startTimes_dict=startTimes_dict,
             logger=logger,
-            backfill=None)      
+            backfill=None,
+            skip_sleep=skip_sleep)      
 
     if backward=='exists' or backward=='exist' or backward=='all': 
         candle_fill_wrapper(
@@ -126,7 +132,8 @@ def candle_grab_fn(
             dir_=dir_,  
             startTimes_dict=startTimes_dict,     
             logger=logger,
-            backfill=None)
+            backfill=None,
+            skip_sleep=skip_sleep)
 
     if backward=='dne' or backward=='all': 
         candle_fill_wrapper(
@@ -144,7 +151,8 @@ def candle_grab_fn(
             dir_=dir_,   
             startTimes_dict=startTimes_dict,         
             logger=logger,
-            backfill=None)
+            backfill=None,
+            skip_sleep=skip_sleep)
 
 
 
@@ -178,6 +186,8 @@ if __name__ == "__main__":
     parser.add_argument('--backward', type=str, help='one of: exists (or exist), dne, all. either --forward or --backward (or both) must be used')
 
     parser.add_argument('--custom_symbols', type=lambda s: [item for item in s.split(',')], help='not required - default is False')
+
+    parser.add_argument('--skip_sleep', action='store_true', help='not required - default is False. If set to True then skip the post-batch time.sleep(60)')     
 
     parser.add_argument('--base', type=lambda s: [item for item in s.split(',')], help='not required - default is False')
     parser.add_argument('--quote', type=lambda s: [item for item in s.split(',')], help='not required - default is False')
@@ -215,10 +225,7 @@ if __name__ == "__main__":
     coinf_index = args.coinf_index
     forward = args.forward
     backward = args.backward
-    
-
-    
-
+    skip_sleep = args.skip_sleep
 
 
 
@@ -366,7 +373,7 @@ if __name__ == "__main__":
 
 
 
-    def wrapper_oi_grab_fn(oi_interval):
+    def wrapper_oi_grab_fn(oi_interval, skip_sleep=False):
         # USDF OI
         if usdf_oi: 
             oi_grab_fn(
@@ -381,7 +388,8 @@ if __name__ == "__main__":
                 limit=USDF_OI_LIMIT,
                 rate_limit=USDF_OI_RATE_LIMIT,                   
                 db_args_dict=dict(TYPE='usdf_oi', EXCHANGE=exchange),
-                logger=logger,)
+                logger=logger,
+                skip_sleep=skip_sleep)
 
         # COINF OI
         if coinf_oi: 
@@ -398,9 +406,10 @@ if __name__ == "__main__":
                 rate_limit=COINF_OI_RATE_LIMIT,                   
                 db_args_dict=dict(TYPE='coinf_oi', EXCHANGE=exchange),
                 logger=logger,
-                coinf_details=coinf_symbols_of_interest_details)
+                coinf_details=coinf_symbols_of_interest_details,
+                skip_sleep=skip_sleep)
 
-    def wrapper_funding_grab_fn():
+    def wrapper_funding_grab_fn(skip_sleep=False):
         # USDF FUNDING
         if usdf_funding: 
 
@@ -417,7 +426,8 @@ if __name__ == "__main__":
                 limit=USDF_FUNDING_LIMIT,
                 rate_limit=USDF_FUNDING_RATE_LIMIT,              
                 usdf=True, coinf=False, 
-                logger=logger)        
+                logger=logger,
+                skip_sleep=skip_sleep)        
 
         # COINF FUNDING 
         if coinf_funding: 
@@ -434,9 +444,10 @@ if __name__ == "__main__":
                 limit=COINF_FUNDING_LIMIT,
                 rate_limit=COINF_FUNDING_RATE_LIMIT,  
                 usdf=False, coinf=True, 
-                logger=logger)        
+                logger=logger,
+                skip_sleep=skip_sleep)        
 
-    def wrapper_candle_grab_fn(candle_interval):
+    def wrapper_candle_grab_fn(candle_interval, skip_sleep=False):
 
         # SPOT CANDLES
         if spot_candles: 
@@ -454,7 +465,8 @@ if __name__ == "__main__":
                 rate_limit = SPOT_CANDLE_RATE_LIMIT,
                 logger=logger, 
                 candle_interval=candle_interval, 
-                symbols=spot_symbols_of_interest)
+                symbols=spot_symbols_of_interest,
+                skip_sleep=skip_sleep)
 
         # USDF CANDLES
         if usdf_candles: 
@@ -472,7 +484,8 @@ if __name__ == "__main__":
                 rate_limit = USDF_CANDLE_RATE_LIMIT,          
                 logger=logger, 
                 candle_interval=candle_interval, 
-                symbols=usdf_symbols_of_interest)
+                symbols=usdf_symbols_of_interest,
+                skip_sleep=skip_sleep)
 
         # COINF CANDLES
         if coinf_candles: 
@@ -490,7 +503,8 @@ if __name__ == "__main__":
                 rate_limit = COINF_CANDLE_RATE_LIMIT,          
                 logger=logger, 
                 candle_interval=candle_interval, 
-                symbols=coinf_symbols_of_interest)            
+                symbols=coinf_symbols_of_interest,
+                skip_sleep=skip_sleep)            
 
         # USDF MARK
         if usdf_mark: 
@@ -508,7 +522,8 @@ if __name__ == "__main__":
                 rate_limit = USDF_CANDLE_RATE_LIMIT,              
                 logger=logger, 
                 candle_interval=candle_interval, 
-                symbols=usdf_symbols_of_interest)
+                symbols=usdf_symbols_of_interest,
+                skip_sleep=skip_sleep)
 
         # COINF MARK
         if coinf_mark: 
@@ -526,7 +541,8 @@ if __name__ == "__main__":
                 rate_limit = COINF_CANDLE_RATE_LIMIT,              
                 logger=logger, 
                 candle_interval=candle_interval, 
-                symbols=coinf_symbols_of_interest)
+                symbols=coinf_symbols_of_interest,
+                skip_sleep=skip_sleep)
 
         # USDF INDEX 
         if usdf_index: 
@@ -544,7 +560,8 @@ if __name__ == "__main__":
                 rate_limit = USDF_CANDLE_RATE_LIMIT,              
                 logger=logger, 
                 candle_interval=candle_interval, 
-                symbols=usdf_pairs_of_interest)
+                symbols=usdf_pairs_of_interest,
+                skip_sleep=skip_sleep)
 
         # COINF INDEX
         if coinf_index: 
@@ -562,7 +579,8 @@ if __name__ == "__main__":
                 rate_limit = COINF_CANDLE_RATE_LIMIT,              
                 logger=logger, 
                 candle_interval=candle_interval, 
-                symbols=coinf_pairs_of_interest)
+                symbols=coinf_pairs_of_interest,
+                skip_sleep=skip_sleep)
 
 
 
@@ -575,10 +593,10 @@ if __name__ == "__main__":
 
     ##############################################
     for candle_interval in candle_interval_:
-        wrapper_candle_grab_fn(candle_interval)
+        wrapper_candle_grab_fn(candle_interval=candle_interval, skip_sleep=skip_sleep)
 
-    for oi_inteval in oi_interval_:
-        wrapper_oi_grab_fn(oi_inteval)
+    for oi_interval in oi_interval_:
+        wrapper_oi_grab_fn(oi_interval=oi_interval, skip_sleep=skip_sleep)
 
-    wrapper_funding_grab_fn()
+    wrapper_funding_grab_fn(skip_sleep=skip_sleep)
 

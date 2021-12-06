@@ -39,6 +39,8 @@ async def get_candles_worker(symbol, interval, limit, startTime=None, endTime=No
     # print(url)
 
     try: 
+        # print(url)
+
         async with aiohttp.ClientSession(json_serialize=json.dumps) as session:
             async with session.get(url) as resp:
                 resp = await resp.json(loads=json.loads)
@@ -93,6 +95,7 @@ async def get_candles(
     for s in symbols:
 
         if type(output[s]) is dict and 'code' in output[s].keys():
+            print(f"CODE: {output[s]['code']} {s}")
             pops.append(s)
     if len(pops)>0:
         if logger is not None: 

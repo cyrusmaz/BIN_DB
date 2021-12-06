@@ -32,7 +32,8 @@ def candle_fill_wrapper(
     rate_limit,
     startTimes_dict=None,
     logger=None, 
-    backfill=None):
+    backfill=None,
+    skip_sleep=False):
     """spot candles:     usdf=False, coinf=False, mark=False, index=False
 
        usdf candles: usdf=True, coinf=False, mark=False, index=False
@@ -130,13 +131,16 @@ def candle_fill_wrapper(
                     limit=limit, rate_limit=rate_limit, 
                     logger=logger)                    
 
-        print(f'{datetime.datetime.now()} time.sleep(60) - candle_fill_wrapper() end of batch {j}, batch_size={batch_size}, symbols:{len(symbols)},usdf:{usdf},coinf:{coinf}, mark:{mark}, index:{index}, interval:{interval}, forward:{forward}')
-        time.sleep(60)
+        print(f'candle_fill_wrapper() end of batch {j}, batch_size={batch_size}, symbols:{len(symbols)},usdf:{usdf},coinf:{coinf}, mark:{mark}, index:{index}, interval:{interval}, forward:{forward}')
+        if not skip_sleep:
+            print(f'{datetime.datetime.now()} time.sleep(60)')
+            time.sleep(60)        
+        
 
     print(f'candle_fill_wrapper() complete. usdf:{usdf},coinf:{coinf}, mark:{mark}, index:{index}, interval:{interval}, forward:{forward}')
 
-
-def funding_fill_wrapper(symbols, dbs, batch_size, usdf, coinf, limit, rate_limit, logger=None):
+def funding_fill_wrapper(symbols, dbs, batch_size, usdf, coinf, limit, rate_limit, logger=None,
+    skip_sleep=False):
     j=0
     for batch_symbols in batch_symbols_fn(symbols=symbols, batch_size=batch_size):
         j+=1
@@ -157,8 +161,12 @@ def funding_fill_wrapper(symbols, dbs, batch_size, usdf, coinf, limit, rate_limi
             print(f'usdf:{usdf},coinf:{coinf}')
             time.sleep(60)
             funding_forwardfill_fn(symbols=batch_symbols,dbs=dbs, usdf=usdf, coinf=coinf, limit=limit, rate_limit=rate_limit, logger=logger)
-        print(f'{datetime.datetime.now()} time.sleep(60) - funding_fill_wrapper() end of batch {j}, usdf:{usdf}, coinf:{coinf}, batch_size={batch_size}, symbols:{len(symbols)}.')
-        time.sleep(60)
+        print(f'funding_fill_wrapper() end of batch {j}, usdf:{usdf}, coinf:{coinf}, batch_size={batch_size}, symbols:{len(symbols)}.')
+        # time.sleep(60)
+        if not skip_sleep:
+            print(f'{datetime.datetime.now()} time.sleep(60)')
+            time.sleep(60)        
+        
     print(f'funding_fill_wrapper() complete')
 
 def oi_fill_wrapper(
@@ -175,7 +183,8 @@ def oi_fill_wrapper(
     startTimes_dict,
     dir_,
     logger=None,
-    coinf_details=None):
+    coinf_details=None,
+    skip_sleep=False):
     j=0
     for batch_symbols in batch_symbols_fn(symbols=symbols, batch_size=batch_size):
         j+=1
@@ -223,6 +232,7 @@ def oi_fill_wrapper(
             print(f'oi_fill_wrapper {exception_time} - got an aiohttp.client_exceptions.ServerDisconnectedError, sleeping for 60 seconds before reattempting')
             print(f'oi_fill_wrapper {exception_time} - batch_size is {batch_size}, symbols remaining: {len(batch_symbols)}, forward: {forward}')
             print(f'usdf:{usdf},coinf:{coinf}')
+            print(f'SLEEPING FOR 60 SECONDS, STARTING @ {datetime.datetime.now()}')
             time.sleep(60)
             if forward is True: 
                 oi_forwardfill_fn(
@@ -239,8 +249,10 @@ def oi_fill_wrapper(
                     rate_limit=rate_limit,  backfill=None,
                     logger=logger, coinf_details=coinf_details) 
                                  
-        print(f'{datetime.datetime.now()} time.sleep(60) - oi_fill_wrapper() end of batch {j}, batch_size={batch_size}, symbols:{len(symbols)}, interval:{interval}, forward:{forward}')
-        time.sleep(60)
+        print(f'oi_fill_wrapper() end of batch {j}, batch_size={batch_size}, symbols:{len(symbols)}, interval:{interval}, forward:{forward}')
+        if not skip_sleep:
+            print(f'{datetime.datetime.now()} time.sleep(60)')
+            time.sleep(60)
 
     print(f'oi_fill_wrapper() complete')
 
