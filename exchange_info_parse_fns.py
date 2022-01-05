@@ -20,7 +20,6 @@ def get_symbol_info(exchange_info, filterType, info_name, symbols=None):
         output[symbol]=symbol_param
     return output 
 
-
 def get_symbols(exchange_infos, logger):
     spot_trading = list(filter(lambda x: x['status']== 'TRADING', exchange_infos['spot']['symbols']))
     spot_trading_symbols = [d['symbol'] for d in spot_trading]
@@ -33,6 +32,7 @@ def get_symbols(exchange_infos, logger):
 
     usdf_NOT_trading = list(filter(lambda x: x['status']!= 'TRADING', exchange_infos['usdf']['symbols']))
     usdf_NOT_trading_symbols = [d['symbol'] for d in usdf_NOT_trading]
+
     if logger is not None:
         logger.info(
             dict(
@@ -41,14 +41,13 @@ def get_symbols(exchange_infos, logger):
                     spot_trading = len(spot_trading),
                     spot_NOT_trading =len(spot_NOT_trading),
                     usdf_trading = len(usdf_trading),
-                    usdf_NOT_trading =len(usdf_NOT_trading)                    
+                    usdf_NOT_trading =len(usdf_NOT_trading),                                   
                 )))
 
     """CONSUMES DICT OF EXCHANGE INFOS AND EXTRACT SYMBOLS"""
     result = {}
     for t in exchange_infos.keys(): 
         result[t] = [d['symbol'] for d in exchange_infos[t]['symbols']]
-
 
     result['spot']=spot_trading_symbols
     result['usdf']=usdf_trading_symbols
@@ -59,5 +58,4 @@ def get_symbols(exchange_infos, logger):
     result['coinf_details'] = {d['symbol']:dict(pair=d['pair'], contractType=d['contractType']) for d in exchange_infos['coinf']['symbols']}
     result['usdf_details'] = {d['symbol']:dict(pair=d['pair'], contractType=d['contractType']) for d in exchange_infos['usdf']['symbols']}
 
-    
     return result 

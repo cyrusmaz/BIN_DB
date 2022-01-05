@@ -5,7 +5,6 @@ import pandas as pd
 from db_helpers import long_to_datetime_str
 from functools import reduce
 
-
 class DB_reader():
     def __init__(self,param_path=None):
         self.candle_map_spot_usdf = [
@@ -76,19 +75,114 @@ class DB_reader():
         self.symbol_info = dict()
 
         self.update_times = dict()
-        if self.param_path is not None: self.update()
+        if self.param_path is not None: self.update_()
 
-    def update(self, param_path=None):
+    def update_(self, param_path=None):
         if param_path is not None: self.param_path=param_path
         if self.param_path is None: return
 
         self.symbols = read_symbols_from_db(param_path=self.param_path)
         self.exchange_info_raw = read_symbols_from_db(param_path=self.param_path, raw_dump=True)        
 
-        self.parse_symbols_info()
+        self.parse_symbols_info_()
         self.update_times={k:long_to_datetime_str(long=v['serverTime'],utc=False, ISO=False) for k,v in self.exchange_info_raw.items()}
         print('update_times: ')
         print(self.update_times)
+
+    def parse_symbols_info_(self):
+        ######################### USDF FUTS
+        self.symbol_info['usdf']= {
+            v['symbol']:{
+                'contract_type': v['contractType'] if 'contractType' in v.keys() else None,
+                'contract_size':v['contractSize'] if 'contractSize' in v.keys() else None,
+                'base':v['baseAsset'] if 'baseAsset' in v.keys() else None,
+                'quote':v['quoteAsset'] if 'quoteAsset' in v.keys() else None,
+
+                'tick_size': get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='PRICE_FILTER', info_name='tickSize', symbols=[v['symbol']])[v['symbol']],
+                'step_size': {
+                    'limit' : get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='LOT_SIZE', info_name='stepSize', symbols=[v['symbol']])[v['symbol']],
+                    'market': get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='MARKET_LOT_SIZE', info_name='stepSize', symbols=[v['symbol']])[v['symbol']],
+                },
+
+                'max_qty': {
+                    'limit' : get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='LOT_SIZE', info_name='maxQty', symbols=[v['symbol']])[v['symbol']],
+                    'market': get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='MARKET_LOT_SIZE', info_name='maxQty', symbols=[v['symbol']])[v['symbol']],
+                },
+                'min_qty': {
+                    'limit' : get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='LOT_SIZE', info_name='minQty', symbols=[v['symbol']])[v['symbol']],
+                    'market': get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='MARKET_LOT_SIZE', info_name='minQty', symbols=[v['symbol']])[v['symbol']],
+                }
+
+                } for v in self.exchange_info_raw['usdf']['symbols']}   
+      
+
+        ######################### COIN FUTS
+        # self.symbol_info['coinf'] = dict()
+        # self.symbol_info['coinf']['tick_size'] = get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='PRICE_FILTER', info_name='tickSize')
+        self.symbol_info['coinf']= {
+            v['symbol']:{
+                'contract_type': v['contractType'] if 'contractType' in v.keys() else None,
+                'contract_size':v['contractSize'] if 'contractSize' in v.keys() else None,
+                'base':v['baseAsset'] if 'baseAsset' in v.keys() else None,
+                'quote':v['quoteAsset'] if 'quoteAsset' in v.keys() else None,
+
+                'tick_size': get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='PRICE_FILTER', info_name='tickSize', symbols=[v['symbol']])[v['symbol']],
+                'step_size': {
+                    'limit' : get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='LOT_SIZE', info_name='stepSize', symbols=[v['symbol']])[v['symbol']],
+                    'market': get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='MARKET_LOT_SIZE', info_name='stepSize', symbols=[v['symbol']])[v['symbol']],
+                },
+
+                'max_qty': {
+                    'limit' : get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='LOT_SIZE', info_name='maxQty', symbols=[v['symbol']])[v['symbol']],
+                    'market': get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='MARKET_LOT_SIZE', info_name='maxQty', symbols=[v['symbol']])[v['symbol']],
+                },
+                'min_qty': {
+                    'limit' : get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='LOT_SIZE', info_name='minQty', symbols=[v['symbol']])[v['symbol']],
+                    'market': get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='MARKET_LOT_SIZE', info_name='minQty', symbols=[v['symbol']])[v['symbol']],
+                }
+
+                } for v in self.exchange_info_raw['coinf']['symbols']}   
+
+        ######################### SPOT        
+        self.symbol_info['spot']= {
+            v['symbol']:{
+                'contract_type': v['contractType'] if 'contractType' in v.keys() else None,
+                'contract_size':v['contractSize'] if 'contractSize' in v.keys() else None,
+                'base':v['baseAsset'] if 'baseAsset' in v.keys() else None,
+                'quote':v['quoteAsset'] if 'quoteAsset' in v.keys() else None,
+                'permissions': v['permissions'],
+
+                'tick_size': get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='PRICE_FILTER', info_name='tickSize', symbols=[v['symbol']])[v['symbol']],
+                'step_size': {
+                    'limit' : get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='LOT_SIZE', info_name='stepSize', symbols=[v['symbol']])[v['symbol']],
+                    'market': get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='MARKET_LOT_SIZE', info_name='stepSize', symbols=[v['symbol']])[v['symbol']],
+                },
+
+                'max_qty': {
+                    'limit' : get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='LOT_SIZE', info_name='maxQty', symbols=[v['symbol']])[v['symbol']],
+                    'market': get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='MARKET_LOT_SIZE', info_name='maxQty', symbols=[v['symbol']])[v['symbol']],
+                },
+                'min_qty': {
+                    'limit' : get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='LOT_SIZE', info_name='minQty', symbols=[v['symbol']])[v['symbol']],
+                    'market': get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='MARKET_LOT_SIZE', info_name='minQty', symbols=[v['symbol']])[v['symbol']],
+                }
+
+                } for v in self.exchange_info_raw['spot']['symbols']}   
+
+        ######################### SPOT        
+
+    def get_oi_db_(self, symbol, oi_interval, coinf, usdf):
+        return get_oi_db(param_path=self.param_path, symbol=symbol, oi_interval=oi_interval, coinf=coinf, usdf=usdf)
+
+    def get_candle_db_(self, symbol,candle_interval,usdf, coinf, mark, index):
+        return get_candle_db(param_path=self.param_path, symbol=symbol,candle_interval=candle_interval,usdf=usdf, coinf=coinf, mark=mark, index=index)        
+
+    def get_funding_db_(self, symbol, usdf, coinf):
+        return get_funding_db(param_path=self.param_path, symbol=symbol, usdf=usdf, coinf=coinf)
+
+
+
+
 
     def get_relevant_symbols_for_lists(self, type_=None, symbols=[], bases=[], quotes=[]):
         intermediate_result = []
@@ -244,88 +338,6 @@ class DB_reader():
                 usdf_non_perp = usdf_non_perp_list,
                 coinf_perp = coinf_perp_list,
                 coinf_non_perp = coinf_non_perp_list                 )            
-
-    def parse_symbols_info(self):
-        ######################### USDF FUTS
-        self.symbol_info['usdf']= {
-            v['symbol']:{
-                'contract_type': v['contractType'] if 'contractType' in v.keys() else None,
-                'contract_size':v['contractSize'] if 'contractSize' in v.keys() else None,
-                'base':v['baseAsset'] if 'baseAsset' in v.keys() else None,
-                'quote':v['quoteAsset'] if 'quoteAsset' in v.keys() else None,
-
-                'tick_size': get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='PRICE_FILTER', info_name='tickSize', symbols=[v['symbol']])[v['symbol']],
-                'step_size': {
-                    'limit' : get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='LOT_SIZE', info_name='stepSize', symbols=[v['symbol']])[v['symbol']],
-                    'market': get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='MARKET_LOT_SIZE', info_name='stepSize', symbols=[v['symbol']])[v['symbol']],
-                },
-
-                'max_qty': {
-                    'limit' : get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='LOT_SIZE', info_name='maxQty', symbols=[v['symbol']])[v['symbol']],
-                    'market': get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='MARKET_LOT_SIZE', info_name='maxQty', symbols=[v['symbol']])[v['symbol']],
-                },
-                'min_qty': {
-                    'limit' : get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='LOT_SIZE', info_name='minQty', symbols=[v['symbol']])[v['symbol']],
-                    'market': get_symbol_info(exchange_info=self.exchange_info_raw['usdf'], filterType='MARKET_LOT_SIZE', info_name='minQty', symbols=[v['symbol']])[v['symbol']],
-                }
-
-                } for v in self.exchange_info_raw['usdf']['symbols']}   
-      
-
-        ######################### COIN FUTS
-        # self.symbol_info['coinf'] = dict()
-        # self.symbol_info['coinf']['tick_size'] = get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='PRICE_FILTER', info_name='tickSize')
-        self.symbol_info['coinf']= {
-            v['symbol']:{
-                'contract_type': v['contractType'] if 'contractType' in v.keys() else None,
-                'contract_size':v['contractSize'] if 'contractSize' in v.keys() else None,
-                'base':v['baseAsset'] if 'baseAsset' in v.keys() else None,
-                'quote':v['quoteAsset'] if 'quoteAsset' in v.keys() else None,
-
-                'tick_size': get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='PRICE_FILTER', info_name='tickSize', symbols=[v['symbol']])[v['symbol']],
-                'step_size': {
-                    'limit' : get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='LOT_SIZE', info_name='stepSize', symbols=[v['symbol']])[v['symbol']],
-                    'market': get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='MARKET_LOT_SIZE', info_name='stepSize', symbols=[v['symbol']])[v['symbol']],
-                },
-
-                'max_qty': {
-                    'limit' : get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='LOT_SIZE', info_name='maxQty', symbols=[v['symbol']])[v['symbol']],
-                    'market': get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='MARKET_LOT_SIZE', info_name='maxQty', symbols=[v['symbol']])[v['symbol']],
-                },
-                'min_qty': {
-                    'limit' : get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='LOT_SIZE', info_name='minQty', symbols=[v['symbol']])[v['symbol']],
-                    'market': get_symbol_info(exchange_info=self.exchange_info_raw['coinf'], filterType='MARKET_LOT_SIZE', info_name='minQty', symbols=[v['symbol']])[v['symbol']],
-                }
-
-                } for v in self.exchange_info_raw['coinf']['symbols']}   
-
-        ######################### SPOT        
-        self.symbol_info['spot']= {
-            v['symbol']:{
-                'contract_type': v['contractType'] if 'contractType' in v.keys() else None,
-                'contract_size':v['contractSize'] if 'contractSize' in v.keys() else None,
-                'base':v['baseAsset'] if 'baseAsset' in v.keys() else None,
-                'quote':v['quoteAsset'] if 'quoteAsset' in v.keys() else None,
-                'permissions': v['permissions'],
-
-                'tick_size': get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='PRICE_FILTER', info_name='tickSize', symbols=[v['symbol']])[v['symbol']],
-                'step_size': {
-                    'limit' : get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='LOT_SIZE', info_name='stepSize', symbols=[v['symbol']])[v['symbol']],
-                    'market': get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='MARKET_LOT_SIZE', info_name='stepSize', symbols=[v['symbol']])[v['symbol']],
-                },
-
-                'max_qty': {
-                    'limit' : get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='LOT_SIZE', info_name='maxQty', symbols=[v['symbol']])[v['symbol']],
-                    'market': get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='MARKET_LOT_SIZE', info_name='maxQty', symbols=[v['symbol']])[v['symbol']],
-                },
-                'min_qty': {
-                    'limit' : get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='LOT_SIZE', info_name='minQty', symbols=[v['symbol']])[v['symbol']],
-                    'market': get_symbol_info(exchange_info=self.exchange_info_raw['spot'], filterType='MARKET_LOT_SIZE', info_name='minQty', symbols=[v['symbol']])[v['symbol']],
-                }
-
-                } for v in self.exchange_info_raw['spot']['symbols']}   
-
-        ######################### SPOT        
 
     def get_spot_candles(self, symbol, interval, n=None, first_n=None, last_n=None, min_time=None, max_time=None, return_df=False, ISO=False, utc=True, time_index=True):
         raw = read_candle_from_db(
@@ -537,11 +549,6 @@ class DB_reader():
         else: 
             return raw
 
-    def get_oi_db(self, symbol, oi_interval, coinf, usdf):
-        return get_oi_db(param_path=self.param_path, symbol=symbol, oi_interval=oi_interval, coinf=coinf, usdf=usdf)
 
-    def get_candle_db(self, symbol,candle_interval,usdf, coinf, mark, index):
-        return get_candle_db(param_path=self.param_path, symbol=symbol,candle_interval=candle_interval,usdf=usdf, coinf=coinf, mark=mark, index=index)        
 
-    def get_funding_db(self, symbol, usdf, coinf):
-        return get_funding_db(param_path=self.param_path, symbol=symbol, usdf=usdf, coinf=coinf)
+

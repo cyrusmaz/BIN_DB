@@ -29,9 +29,16 @@ def read_oi_from_db(
 
     if first_n == last_n and min_time == max_time: return
     if min_time is None and max_time is None and n<=0: return    
-
-    oi_db_ = get_oi_db(param_path=param_path, symbol=symbol, oi_interval=oi_interval, coinf=coinf,usdf=usdf)
-
+    try: 
+        oi_db_ = get_oi_db(param_path=param_path, symbol=symbol, oi_interval=oi_interval, coinf=coinf,usdf=usdf)
+    except Exception as e:
+        print('----------')
+        print('read_oi_from_db')
+        print(f'oi_interval: {oi_interval}')
+        print(f'symbol: {symbol}, coinf:{coinf} usdf: {usdf} ')
+        print(e)
+        print('----------')
+        return []
     # BY TIME
     if min_time is not None and max_time is not None: 
         results= oi_db_.query(f"SELECT oi, oi_time_string FROM OI_TABLE WHERE oi_time>={min_time} AND oi_time<={max_time} ORDER BY oi_time ASC")
@@ -64,8 +71,6 @@ def read_oi_from_db(
     del oi_db_
     return output
 
-
-
 def read_funding_from_db(
     param_path, 
     symbol, 
@@ -78,8 +83,16 @@ def read_funding_from_db(
 
     if first_n == last_n and min_time == max_time: return
     if min_time is None and max_time is None and n<=0: return    
+    try:
+        funding_db_ = get_funding_db(param_path=param_path, symbol=symbol, usdf=usdf, coinf=coinf)
+    except Exception as e:
+        print('----------')
+        print(f'read_funding_from_db')
+        print(f'symbol: {symbol}, coinf:{coinf} usdf: {usdf} ')
+        print(e)
+        print('----------')
+        return []
 
-    funding_db_ = get_funding_db(param_path=param_path, symbol=symbol, usdf=usdf, coinf=coinf)
 
     # BY TIME
     if min_time is not None and max_time is not None: 
@@ -112,9 +125,6 @@ def read_funding_from_db(
     del funding_db_
     return output
 
-
-
-
 def read_candle_from_db(
     param_path, 
     symbol,
@@ -126,9 +136,18 @@ def read_candle_from_db(
 
     if first_n == last_n and min_time == max_time: return
     if min_time is None and max_time is None and n<=0: return
+    try: 
+        candle_db_ = get_candle_db(param_path=param_path, symbol=symbol,candle_interval=candle_interval,usdf=usdf, coinf=coinf, mark=mark, index=index)
+    except Exception as e:
+        print('----------')
+        print(f'read_candle_from_db')
+        print(f'symbol: {symbol}, coinf:{coinf} usdf: {usdf}')
+        print(f'mark: {mark}, {index}:index')
+        print(e)
+        print('----------')
+        return []
 
-    candle_db_ = get_candle_db(param_path=param_path, symbol=symbol,candle_interval=candle_interval,usdf=usdf, coinf=coinf, mark=mark, index=index)
-
+ 
     # BY TIME
     if min_time is not None and max_time is not None: 
         results= candle_db_.query(f"SELECT candle, open_time_string FROM CANDLE_TABLE WHERE open_time>={min_time} AND open_time<={max_time} ORDER BY open_time ASC")
@@ -159,8 +178,6 @@ def read_candle_from_db(
         raise(e)
     del candle_db_
     return output
-
-
 
 def get_candle_db(param_path, symbol,candle_interval,usdf, coinf, mark, index):
 
@@ -234,7 +251,6 @@ def get_funding_db(param_path, symbol, usdf, coinf):
     # db_name=f'{symbol}_funding.db'
     funding_db_=funding_db(SYMBOL=symbol, DB_DIRECTORY=dir_, DB_NAME=db_name, READ_ONLY=True, **db_args_dict)
     return funding_db_
-
 
 def get_oi_db(param_path, symbol, oi_interval, coinf, usdf):
     # symbols_dir, usdf_candles_dir, spot_candles_dir, usdf_oi_dir, usdf_funding_dir, exchange = get_directories_from_param_path(param_path)

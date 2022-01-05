@@ -5,14 +5,10 @@
       "coinf",
       "spot"
    ],
+   
    "DB_DIRECTORY": "/home/cm/Documents/PY_DEV/DB/BINANCE/",
    "CANDLE_INTERVAL": ["5m" ,"1h", "4h"], 
    "OI_INTERVAL": ["5m" ,"1h", "4h"],
-   "SPOT_CANDLE_QUOTES": [
-      "USDT",
-      "BTC",
-      "ETH"
-   ],
 
    "SPOT_CANDLE_LIMIT": 1000,
    "SPOT_CANDLE_RATE_LIMIT": 1200,
@@ -23,7 +19,6 @@
    "USDF_OI_RATE_LIMIT": 2400,
    "USDF_FUNDING_LIMIT": 1000,
    "USDF_FUNDING_RATE_LIMIT": 2400,
-   
    
    "COINF_CANDLE_LIMIT": 499,
    "COINF_CANDLE_RATE_LIMIT": 3000,

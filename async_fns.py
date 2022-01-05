@@ -51,7 +51,6 @@ async def get_candles_worker(symbol, interval, limit, startTime=None, endTime=No
             logger.critical(dict(origin='get_candles_worker', payload=dict(error=e, symbol=symbol, usdf=usdf, coinf=coinf, interval=interval, url=url)))
         raise e
 
-
 async def get_candles(
     symbols, 
     interval='1m',
@@ -170,7 +169,6 @@ async def get_futs_stat_worker(
         if logger is not None: 
             logger.critical(dict(origin='get_futs_stat_worker', payload=dict(error=e, symbol=symbol, stat=stat, period=period,limit=limit, usdf=usdf, coinf=coinf, startTime=startTime, endTime=endTime, url=url)))
         raise e
-
 
 async def get_futs_stats(
     symbols, stat, limit, 

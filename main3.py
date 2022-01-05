@@ -11,7 +11,6 @@ from fill_wrappers import *
 import argparse
 import json
 
-
 def oi_grab_fn(
     dir_, backward, forward, db_args_dict, 
     check_existence, usdf, coinf, 
@@ -185,12 +184,12 @@ if __name__ == "__main__":
     parser.add_argument('--forward', action='store_true', help='not required - default is False. either --forward or --backward (or both) must be used')
     parser.add_argument('--backward', type=str, help='one of: exists (or exist), dne, all. either --forward or --backward (or both) must be used')
 
-    parser.add_argument('--custom_symbols', type=lambda s: [item for item in s.split(',')], help='not required - default is False')
+    parser.add_argument('--custom_symbols', type=lambda s: [item for item in s.split(',')], help='not required')
 
     parser.add_argument('--skip_sleep', action='store_true', help='not required - default is False. If set to True then skip the post-batch time.sleep(60)')     
 
-    parser.add_argument('--base', type=lambda s: [item for item in s.split(',')], help='not required - default is False')
-    parser.add_argument('--quote', type=lambda s: [item for item in s.split(',')], help='not required - default is False')
+    parser.add_argument('--base', type=lambda s: [item for item in s.split(',')], help='not required')
+    parser.add_argument('--quote', type=lambda s: [item for item in s.split(',')], help='not required')
 
 
     args = parser.parse_args()
@@ -227,14 +226,8 @@ if __name__ == "__main__":
     backward = args.backward
     skip_sleep = args.skip_sleep
 
-
-
-
-    param_path = '/home/cm/Documents/PY_DEV/BIN_DB/params.json'
-    # param_path = '/home/cm/Documents/PY_DEV/DB_BIN/params.json'
-
     # get parameters
-    with open(param_path,'r') as f: 
+    with open('params.json','r') as f: 
         db_parameters= json.load(f)
 
     # extract the db directory path
@@ -282,7 +275,6 @@ if __name__ == "__main__":
     symbols_dir=paths['symbols_dir']
     exchange=paths['exchange']
 
-
     # extract exchange and exchange_types 
     exchange=db_parameters['EXCHANGE']
     exchange_types = db_parameters['EXCHANGE_TYPES']
@@ -307,7 +299,6 @@ if __name__ == "__main__":
     COINF_FUNDING_LIMIT=db_parameters['COINF_FUNDING_LIMIT']
     COINF_FUNDING_RATE_LIMIT=db_parameters['COINF_FUNDING_RATE_LIMIT'] 
 
-
     # set up symbols database 
     db_symbols=symbols_db(DB_DIRECTORY=symbols_dir,DB_NAME='symbols.db',EXCHANGE=exchange, LOGGER=logger)
 
@@ -318,11 +309,8 @@ if __name__ == "__main__":
         # raw_exchange_infos =db_symbols.get_last(raw_dump=True)
         db_symbols.update_symbols_db(new_symbols_dict, exchange_infos_dict)
 
-
     # grab last symbol insert from database 
     symbols = db_symbols.get_last()
-
-
 
     custom_symbols = args.custom_symbols 
     if custom_symbols is not None: 
