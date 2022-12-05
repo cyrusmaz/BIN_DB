@@ -487,15 +487,17 @@ class DB_reader():
             usdf=False, coinf=True, 
             min_time=min_time, max_time=max_time, 
             first_n=first_n, last_n=last_n)
-        if return_df: 
-            df = pd.DataFrame(data=raw, columns=self.funding_map,dtype=float)
+        if not return_df: 
+            return raw
+        else: 
+            raw = [{k: v for k, v in d.items() if k != 'symbol'} for d in raw]
+            df = pd.DataFrame(data=raw, columns=self.funding_map[1:],dtype=float)
             df['time']=df['fundingTime'].apply(long_to_datetime_str,ISO=ISO, utc=utc)
             if time_index: 
                 df.set_index('time',inplace=True)
                 df.sort_index(axis=0, inplace=True)                
             return df
-        else: 
-            return raw
+
        
     def get_usdf_funding(self, symbol, n=None, first_n=None, last_n=None, min_time=None, max_time=None, return_df=False, ISO=False, utc=True, time_index=True):
         raw = read_funding_from_db(
@@ -504,15 +506,17 @@ class DB_reader():
             usdf=True, coinf=False, 
             min_time=min_time, max_time=max_time, 
             first_n=first_n, last_n=last_n)
-        if return_df: 
-            df = pd.DataFrame(data=raw, columns=self.funding_map,dtype=float)
+        if not return_df: 
+            return raw
+        else: 
+            raw = [{k: v for k, v in d.items() if k != 'symbol'} for d in raw] 
+            df = pd.DataFrame(data=raw, columns=self.funding_map[1:],dtype=float)
             df['time']=df['fundingTime'].apply(long_to_datetime_str,ISO=ISO, utc=utc)
             if time_index: 
                 df.set_index('time',inplace=True)
                 df.sort_index(axis=0, inplace=True)                
             return df
-        else: 
-            return raw
+
 
     def get_coinf_oi(self, symbol, interval, n=None, first_n=None, last_n=None, min_time=None, max_time=None, return_df=False, ISO=False, utc=True, time_index=True):
         raw= read_oi_from_db(
@@ -521,16 +525,17 @@ class DB_reader():
             oi_interval=interval, n=n, 
             min_time=min_time, max_time=max_time, 
             first_n=first_n, last_n=last_n)
-
-        if return_df: 
-            df = pd.DataFrame(data=raw, columns=self.coinf_oi_map,dtype=float)
+        if not return_df: 
+            return raw
+        else: 
+            raw = [{k: v for k, v in d.items() if k != 'symbol'} for d in raw]
+            df = pd.DataFrame(data=raw, columns=self.coinf_oi_map[1:],dtype=float)
             df['time']=df['timestamp'].apply(long_to_datetime_str,ISO=ISO, utc=utc)
             if time_index: 
                 df.set_index('time',inplace=True)
                 df.sort_index(axis=0, inplace=True)                
             return df
-        else: 
-            return raw
+
 
     def get_usdf_oi(self, symbol, interval, n=None, first_n=None, last_n=None, min_time=None, max_time=None, return_df=False, ISO=False, utc=True, time_index=True):
         raw= read_oi_from_db(
@@ -539,15 +544,16 @@ class DB_reader():
             oi_interval=interval, n=n, 
             min_time=min_time, max_time=max_time, 
             first_n=first_n, last_n=last_n)
-        if return_df: 
-            df = pd.DataFrame(data=raw, columns=self.usdf_oi_map,dtype=float)
+        if not return_df: 
+            return raw
+        else: 
+            raw = [{k: v for k, v in d.items() if k != 'symbol'} for d in raw]
+            df = pd.DataFrame(data=raw, columns=self.usdf_oi_map[1:],dtype=float)
             df['time']=df['timestamp'].apply(long_to_datetime_str,ISO=ISO, utc=utc)
             if time_index: 
                 df.set_index('time',inplace=True)
                 df.sort_index(axis=0, inplace=True)                
             return df
-        else: 
-            return raw
 
 
 

@@ -165,6 +165,7 @@ if __name__ == "__main__":
     parser.add_argument('--oi_interval', type=lambda s: [item for item in s.split(',')], help='not required - default is False')
 
     parser.add_argument('--get_all', action='store_true', help='not required - default is False. gets usdf/coinf/spot candles + usdf/coinf oi/mark candles/index candles + usdf/coin_perps funding')
+    parser.add_argument('--get_select', action='store_true', help='not required - default is False. gets usdf/coinf/spot candles + usdf/coinf oi/mark candles/index candles + usdf/coin_perps funding')
     parser.add_argument('--spot_candles', action='store_true', help='not required - default is False')
 
     parser.add_argument('--usdf_candles', action='store_true', help='not required - default is False')
@@ -208,7 +209,25 @@ if __name__ == "__main__":
         args.coinf_mark = True
         args.coinf_index = True
         args.forward = True
-        args.backward = 'dne'
+        args.backward = 'dne' if args.backward is None else args.backward
+
+    if args.get_select: 
+        args.update_symbols = True
+        args.check_existence = True
+        args.usdf_oi = True
+        args.coinf_oi = False
+        args.usdf_funding = True
+        args.coinf_funding = False
+        args.spot_candles = True
+        args.usdf_candles = True
+        args.coinf_candles = False
+        args.usdf_mark  = False
+        args.usdf_index = False
+        args.coinf_mark = False
+        args.coinf_index = False
+        args.forward = True
+        args.backward = 'dne' if args.backward is None else args.backward
+
 
     check_existence = args.check_existence
     usdf_oi = args.usdf_oi
@@ -341,7 +360,7 @@ if __name__ == "__main__":
         usdf_symbols_of_interest_details=symbols['usdf_details']          
 
     elif args.base is not None or args.quote is not None: 
-        dbr = DB_reader(param_path=param_path)
+        dbr = DB_reader(param_path='params.json')
         # symbols_ = dbr.get_relevant_symbols(type_=None, symbol=None, base=args.base, quote=args.quote, return_details=False)
         symbols_ = dbr.get_relevant_symbols_for_lists(type_=None, symbols=[], bases=args.base, quotes=args.quote)
         usdf_symbols_of_interest = symbols_['usdf']

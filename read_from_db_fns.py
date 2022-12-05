@@ -62,7 +62,7 @@ def read_oi_from_db(
     try: 
         first_time = results[0][1]
         last_time = results[-1][1]  
-        print(f'symbol:{symbol} oi, usdf:{usdf}, coinf:{coinf} - first timestamp: {first_time}, last timestamp: {last_time}')
+        # print(f'symbol:{symbol} oi, usdf:{usdf}, coinf:{coinf} - first timestamp: {first_time}, last timestamp: {last_time}')
     except Exception as e: 
         print(e)
         print(f'symbol:{symbol} oi, usdf:{usdf}, coinf:{coinf}')
@@ -117,7 +117,7 @@ def read_funding_from_db(
     try: 
         first_time = results[0][1]
         last_time = results[-1][1]  
-        print(f'symbol:{symbol} funding, usdf:{usdf}, coinf:{coinf}, - first timestamp: {first_time}, last timestamp: {last_time}')
+        # print(f'symbol:{symbol} funding, usdf:{usdf}, coinf:{coinf}, - first timestamp: {first_time}, last timestamp: {last_time}')
     except Exception as e: 
         print(e)
         print(f'symbol:{symbol} funding, usdf:{usdf}, coinf:{coinf}')
@@ -171,7 +171,7 @@ def read_candle_from_db(
     try: 
         first_time = results[0][1]
         last_time = results[-1][1]  
-        print(f'symbol:{symbol} usdf:{usdf} coinf:{coinf} mark:{mark} index:{index} candles - first timestamp: {first_time}, last timestamp: {last_time}')
+        # print(f'symbol:{symbol} usdf:{usdf} coinf:{coinf} mark:{mark} index:{index} candles - first timestamp: {first_time}, last timestamp: {last_time}')
     except Exception as e: 
         print(e)
         print(f'symbol:{symbol} usdf:{usdf} coinf:{coinf} mark:{mark} index:{index} candles')

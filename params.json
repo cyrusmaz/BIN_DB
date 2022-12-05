@@ -7,8 +7,8 @@
    ],
    
    "DB_DIRECTORY": "/home/cm/Documents/PY_DEV/DB/BINANCE/",
-   "CANDLE_INTERVAL": ["5m" ,"1h", "4h"], 
-   "OI_INTERVAL": ["5m" ,"1h", "4h"],
+   "CANDLE_INTERVAL": ["1h", "4h", "1d"], 
+   "OI_INTERVAL": ["1h", "4h", "1d"],
 
    "SPOT_CANDLE_LIMIT": 1000,
    "SPOT_CANDLE_RATE_LIMIT": 1200,
